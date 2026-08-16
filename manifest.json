@@ -2,12 +2,19 @@
   "schemaVersion": 1,
   "id": "io.github.brm-src.aismell-quick-clean",
   "name": "aismell quick clean",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "author": "Cris",
   "description": "Rewrite short English and Spanish text with aismell's online service.",
-  "kinds": ["panel"],
+  "kinds": ["panel", "bar-widget"],
   "keepLoaded": true,
   "entryPoints": {
-    "panel": "QuickClean.qml"
+    "panel": "QuickClean.qml",
+    "barWidget": "BarWidget.qml"
+  },
+  "barWidget": {
+    "displayName": "aismell quick clean",
+    "description": "Opens the aismell rewrite panel.",
+    "category": "Plugin",
+    "allowMultiple": false
   }
 }
