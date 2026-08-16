@@ -34,13 +34,27 @@ def clean_payload(text: str) -> dict[str, object]:
         return {"ok": False, "error": "Este plugin es para textos cortos. Usa aismell.me para documentos largos."}
 
     result = clean(text)
-    if result.changes == 1:
-        message = "Quité 1 frase de relleno."
-    elif result.changes:
-        message = f"Quité {result.changes} frases de relleno."
+    if result.language == "es":
+        if result.changes == 1:
+            message = "Quité 1 frase de relleno."
+        elif result.changes:
+            message = f"Quité {result.changes} frases de relleno."
+        else:
+            message = "No encontré relleno seguro para quitar."
     else:
-        message = "No encontré relleno seguro para quitar."
-    return {"ok": True, "text": result.text, "changes": result.changes, "message": message}
+        if result.changes == 1:
+            message = "Removed 1 filler phrase."
+        elif result.changes:
+            message = f"Removed {result.changes} filler phrases."
+        else:
+            message = "No safe filler to remove."
+    return {
+        "ok": True,
+        "text": result.text,
+        "changes": result.changes,
+        "message": message,
+        "language": result.language,
+    }
 
 
 def _read_clipboard() -> str:

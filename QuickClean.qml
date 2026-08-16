@@ -13,9 +13,14 @@ Item {
   property bool opened: false
   property bool busy: false
   property string cleanedText: ""
-  property string status: "Copia un mensaje, correo o párrafo y lo dejo más limpio."
+  property string uiLanguage: Qt.locale().name.toLowerCase().startsWith("es") ? "es" : "en"
+  property string status: uiLanguage === "es"
+    ? "Copia un mensaje, correo o párrafo y lo dejo más limpio."
+    : "Copy a message, email, or paragraph and I will clean it up."
   property int changes: 0
   property var callback: null
+
+  function words(es, en) { return root.uiLanguage === "es" ? es : en }
 
   function open() {
     root.opened = true
@@ -48,7 +53,7 @@ Item {
     try {
       payload = JSON.parse(String(raw || "{}"))
     } catch (error) {
-      root.status = "aismell no pudo leer la respuesta."
+      root.status = root.words("aismell no pudo leer la respuesta.", "aismell could not read the response.")
       return
     }
     if (root.callback) root.callback(payload)
@@ -56,23 +61,26 @@ Item {
   }
 
   function cleanClipboard() {
-    root.status = "Leyendo y limpiando el portapapeles…"
+    root.status = root.words("Leyendo y limpiando el portapapeles…", "Reading and cleaning the clipboard…")
     root.runHelper("clean-clipboard", function(payload) {
       if (!payload.ok) {
         root.cleanedText = ""
         root.changes = 0
-        root.status = payload.error || "No pude limpiar ese texto."
+        root.status = payload.error || root.words("No pude limpiar ese texto.", "I could not clean that text.")
         return
       }
+      root.uiLanguage = payload.language === "es" ? "es" : "en"
       root.cleanedText = String(payload.text || "")
       root.changes = Number(payload.changes || 0)
-      root.status = payload.message || "Texto listo."
+      root.status = payload.message || root.words("Texto listo.", "Text ready.")
     })
   }
 
   function copyClean() {
     root.runHelper("copy-latest", function(payload) {
-      root.status = payload.message || payload.error || "Listo."
+      root.status = payload.ok
+        ? root.words("Texto limpio copiado.", "Clean text copied.")
+        : (payload.error || root.words("No pude copiar el texto limpio.", "I could not copy the clean text."))
     })
   }
 
@@ -208,7 +216,7 @@ Item {
               Text {
                 id: cleanText
                 width: parent.width
-                text: root.busy ? "limpiando…" : (root.cleanedText || "Copia texto y vuelve a abrir esta ventana.")
+                text: root.busy ? root.words("limpiando…", "cleaning…") : (root.cleanedText || root.words("Copia texto y vuelve a abrir esta ventana.", "Copy text and reopen this window."))
                 color: root.cleanedText ? Color.foreground : Util.alpha(Color.foreground, 0.55)
                 font.family: Style.font.family
                 font.pixelSize: 15
@@ -230,7 +238,7 @@ Item {
               color: reloadMouse.containsMouse ? Util.alpha(Color.foreground, 0.12) : Util.alpha(Color.foreground, 0.07)
               Text {
                 anchors.centerIn: parent
-                text: "volver a limpiar"
+                text: root.words("volver a limpiar", "clean again")
                 color: Color.foreground
                 font.family: Style.font.family
                 font.pixelSize: 13
@@ -254,7 +262,7 @@ Item {
               color: root.cleanedText && !root.busy ? Color.accent : Util.alpha(Color.foreground, 0.10)
               Text {
                 anchors.centerIn: parent
-                text: "copiar limpio"
+                text: root.words("copiar limpio", "copy clean")
                 color: root.cleanedText && !root.busy ? Color.background : Util.alpha(Color.foreground, 0.42)
                 font.family: Style.font.family
                 font.pixelSize: 13

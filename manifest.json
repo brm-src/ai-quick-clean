@@ -4,7 +4,7 @@
   "name": "aismell quick clean",
   "version": "0.1.0",
   "author": "Cris",
-  "description": "Limpia texto corto del portapapeles con el motor local de aismell.",
+  "description": "Clean short English and Spanish clipboard text with aismell's local engine.",
   "kinds": ["panel"],
   "keepLoaded": true,
   "entryPoints": {

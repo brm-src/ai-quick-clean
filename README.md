@@ -1,44 +1,45 @@
 # aismell quick clean
 
-![Vista previa de aismell quick clean](preview.png)
+![aismell quick clean preview](preview.png)
 
-Un atajo pequeño para limpiar el texto que acabas de copiar, sin convertirlo en otra cosa.
+A small Omarchy shortcut for cleaning the text you just copied — without turning it into something else.
 
-`super + shift + s` abre una capa sobre Omarchy, lee el portapapeles, elimina relleno seguro y deja una versión lista para copiar.
+`super + shift + s` opens an overlay, reads the clipboard, removes high-confidence filler, and leaves a cleaner version ready to copy.
 
-## Para qué sirve
+## What it does
 
-- Mensajes, correos y párrafos cortos que se sienten inflados o mecánicos.
-- Quitar frases de relleno, introducciones grandilocuentes y cierres genéricos que no aportan.
-- Conservar el tono, los nombres, fechas, enlaces, citas, código y listas.
+- Works with short English and Spanish messages, emails, and paragraphs.
+- Removes empty framing, inflated introductions, and generic closers only when the edit is safe.
+- Preserves tone, names, dates, links, quotes, code, and lists.
+- Shows its summary and controls in the language of the text after cleaning.
 
-No es un reescritor generativo ni asigna una nota a tu texto. Si no encuentra una mejora segura, lo deja intacto.
+It is not a generative rewriter and it does not score your writing. If it cannot make a safe edit, it leaves the text alone.
 
-## Uso
+## Use
 
-1. Copia el texto.
-2. Presiona `super + shift + s`.
-3. Revisa el resultado y pulsa **copiar limpio**.
+1. Copy text.
+2. Press `super + shift + s`.
+3. Review the result and select **copy clean**.
 
-`escape` cierra la ventana. `ctrl + enter` copia el resultado.
+`escape` closes the window. `ctrl + enter` copies the result.
 
-## Instalación local
+## Local installation
 
-El plugin requiere Omarchy/Hyprland, `wl-paste`, `wl-copy` y una copia local del motor [aismell](https://aismell.me).
+The plugin needs Omarchy/Hyprland, `wl-paste`, `wl-copy`, and a local copy of the [aismell](https://aismell.me) engine.
 
 ```bash
 omarchy plugin install https://github.com/brm-src/aismell-quick-clean
 ```
 
-La instalación registra el atajo `super + shift + s`. No usa `sudo`, no instala paquetes y no envía tu texto a ningún servicio: el procesamiento ocurre en tu equipo.
+It registers `super + shift + s`. It does not use `sudo`, install packages, or send text to a service: cleanup happens on your machine.
 
-Para quitar solo el atajo:
+To remove only the shortcut:
 
 ```bash
 bash ~/.config/omarchy/plugins/io.github.brm-src.aismell-quick-clean/setup.sh --remove
 ```
 
-## Desarrollo y comprobación
+## Development checks
 
 ```bash
 /usr/bin/python3 -m pytest tests -q
@@ -47,10 +48,14 @@ qmllint -I /usr/share/omarchy/shell QuickClean.qml
 omarchy plugin validate .
 ```
 
-## Privacidad
+## Privacy
 
-El texto se lee desde el portapapeles y el resultado temporal se guarda en `~/.local/state/aismell-quick-clean/latest.txt`, con permisos de usuario. Se reemplaza cada vez que limpias un texto y sirve únicamente para el botón **copiar limpio**.
+The plugin reads text from the clipboard. The cleaned result is temporarily saved at `~/.local/state/aismell-quick-clean/latest.txt` with user-only permissions so the **copy clean** button can write it back to the clipboard. It is replaced every time you clean text.
 
-## Licencia
+## Español
+
+Funciona con mensajes, correos y párrafos cortos en español e inglés. Quita relleno seguro sin reescribir el contenido ni enviar el texto a una API. Copia un texto y usa `super + shift + s`; después revisa el resultado y elige **copiar limpio**.
+
+## License
 
 MIT.
