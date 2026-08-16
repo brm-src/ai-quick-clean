@@ -29,7 +29,7 @@ Item {
     root.sourceText = ""
     root.cleanedText = ""
     root.changes = 0
-    root.cleanClipboard()
+    root.status = root.words("Pega o escribe un texto corto.", "Paste or type a short text.")
   }
 
   function close() {
@@ -42,10 +42,11 @@ Item {
     else root.open()
   }
 
-  function runHelper(command, done) {
+  function runHelper(command, input, done) {
     if (root.busy) return
     root.busy = true
     root.callback = done
+    helper.inputText = String(input || "")
     helper.command = ["python3", root.helperPath, command]
     helper.running = true
   }
@@ -66,27 +67,41 @@ Item {
   }
 
   function cleanClipboard() {
-    root.status = root.words("Leyendo el portapapeles…", "Reading the clipboard…")
-    root.runHelper("clean-clipboard", function(payload) {
-      if (!payload.ok) {
-        root.hasResult = false
-        root.sourceText = ""
-        root.cleanedText = ""
-        root.changes = 0
-        root.status = payload.error || root.words("No pude limpiar ese texto.", "I could not clean that text.")
-        return
-      }
-      root.uiLanguage = payload.language === "es" ? "es" : "en"
-      root.sourceText = String(payload.source || "")
-      root.cleanedText = String(payload.text || "")
-      root.changes = Number(payload.changes || 0)
-      root.hasResult = true
-      root.status = payload.message || root.words("Resultado listo.", "Result ready.")
+    root.status = root.words("Leyendo y limpiando el portapapeles…", "Reading and cleaning the clipboard…")
+    root.runHelper("clean-clipboard", "", function(payload) {
+      root.applyCleanPayload(payload)
     })
   }
 
+  function cleanText() {
+    if (!root.sourceText.trim()) {
+      root.status = root.words("Pega o escribe un texto antes de limpiar.", "Paste or type text before cleaning.")
+      return
+    }
+    root.status = root.words("Buscando cambios seguros…", "Looking for safe changes…")
+    root.runHelper("clean-stdin", root.sourceText, function(payload) {
+      root.applyCleanPayload(payload)
+    })
+  }
+
+  function applyCleanPayload(payload) {
+    if (!payload.ok) {
+      root.hasResult = false
+      root.cleanedText = ""
+      root.changes = 0
+      root.status = payload.error || root.words("No pude limpiar ese texto.", "I could not clean that text.")
+      return
+    }
+    root.uiLanguage = payload.language === "es" ? "es" : "en"
+    root.sourceText = String(payload.source || "")
+    root.cleanedText = String(payload.text || "")
+    root.changes = Number(payload.changes || 0)
+    root.hasResult = true
+    root.status = payload.message || root.words("Resultado listo.", "Result ready.")
+  }
+
   function copyClean() {
-    root.runHelper("copy-latest", function(payload) {
+    root.runHelper("copy-latest", "", function(payload) {
       root.status = payload.ok
         ? root.words("Texto limpio copiado.", "Clean text copied.")
         : (payload.error || root.words("No pude copiar el texto limpio.", "I could not copy the clean text."))
@@ -105,6 +120,12 @@ Item {
 
   Process {
     id: helper
+    property string inputText: ""
+    stdinEnabled: true
+    onStarted: {
+      write(inputText + "\u001e")
+      inputText = ""
+    }
     stdout: StdioCollector {
       waitForEnd: true
       onStreamFinished: root.handlePayload(text)
@@ -230,26 +251,52 @@ Item {
                 anchors.leftMargin: parent.contentLeftInset
                 spacing: Style.spacing.sm
                 Text {
-                  text: root.words("original", "original")
+                  text: root.words("tu texto", "your text")
                   color: Color.menu.text
                   opacity: 0.56
                   font.family: Style.font.menuFamily
                   font.pixelSize: Style.font.bodySmall
                   font.bold: true
                 }
-                TextEdit {
+                Flickable {
+                  id: sourceScroll
                   width: parent.width
                   height: parent.height - y
-                  text: root.hasResult ? root.sourceText : root.words("El texto del portapapeles aparecerá aquí.", "Your clipboard text will appear here.")
-                  color: root.hasResult ? Color.menu.text : Color.menu.text
-                  opacity: root.hasResult ? 0.76 : 0.48
-                  font.family: Style.font.menuFamily
-                  font.pixelSize: Style.font.body
-                  wrapMode: TextEdit.Wrap
-                  readOnly: true
-                  selectByMouse: true
-                  textFormat: TextEdit.PlainText
+                  contentWidth: width
+                  contentHeight: Math.max(height, sourceEditor.height)
                   clip: true
+
+                  TextEdit {
+                    id: sourceEditor
+                    width: sourceScroll.width
+                    height: Math.max(sourceScroll.height, contentHeight)
+                    text: root.sourceText
+                    color: Color.menu.text
+                    opacity: 0.9
+                    font.family: Style.font.menuFamily
+                    font.pixelSize: Style.font.body
+                    wrapMode: TextEdit.Wrap
+                    selectByMouse: true
+                    textFormat: TextEdit.PlainText
+                    onTextChanged: {
+                      if (activeFocus && text !== root.sourceText) {
+                        root.sourceText = text
+                        root.hasResult = false
+                        root.cleanedText = ""
+                        root.changes = 0
+                        root.status = root.words("Listo para una pasada segura.", "Ready for a safe cleanup pass.")
+                      }
+                    }
+                    Text {
+                      visible: sourceEditor.text === "" && !sourceEditor.activeFocus
+                      anchors.fill: parent
+                      text: root.words("Pega o escribe un mensaje, correo o párrafo corto.", "Paste or type a short message, email, or paragraph.")
+                      color: Color.menu.text
+                      opacity: 0.45
+                      font: sourceEditor.font
+                      wrapMode: Text.Wrap
+                    }
+                  }
                 }
               }
             }
@@ -277,19 +324,28 @@ Item {
                   font.pixelSize: Style.font.bodySmall
                   font.bold: true
                 }
-                TextEdit {
+                Flickable {
+                  id: cleanedScroll
                   width: parent.width
                   height: parent.height - y
-                  text: root.hasResult ? root.cleanedText : root.words("Nada que revisar todavía.", "Nothing to review yet.")
-                  color: root.changes > 0 ? Style.selectedStateColor(Color.menu.text, Color.accent) : Color.menu.text
-                  opacity: root.hasResult ? 1 : 0.48
-                  font.family: Style.font.menuFamily
-                  font.pixelSize: Style.font.body
-                  wrapMode: TextEdit.Wrap
-                  readOnly: true
-                  selectByMouse: true
-                  textFormat: TextEdit.PlainText
+                  contentWidth: width
+                  contentHeight: Math.max(height, cleanedEditor.height)
                   clip: true
+
+                  TextEdit {
+                    id: cleanedEditor
+                    width: cleanedScroll.width
+                    height: Math.max(cleanedScroll.height, contentHeight)
+                    text: root.hasResult ? root.cleanedText : root.words("Limpia el texto para ver una propuesta.", "Clean the text to see a suggestion.")
+                    color: root.changes > 0 ? Style.selectedStateColor(Color.menu.text, Color.accent) : Color.menu.text
+                    opacity: root.hasResult ? 1 : 0.48
+                    font.family: Style.font.menuFamily
+                    font.pixelSize: Style.font.body
+                    wrapMode: TextEdit.Wrap
+                    readOnly: true
+                    selectByMouse: true
+                    textFormat: TextEdit.PlainText
+                  }
                 }
               }
             }
@@ -301,12 +357,20 @@ Item {
             spacing: Style.spacing.sm
 
             Button {
-              text: root.words("limpiar otro texto", "clean new clipboard")
-              tooltipText: root.words("Lee de nuevo el portapapeles.", "Read the clipboard again.")
+              id: clipboardAction
+              text: root.words("usar portapapeles", "use clipboard")
+              tooltipText: root.words("Limpia lo que acabas de copiar.", "Clean what you just copied.")
               bordered: true
               onClicked: root.cleanClipboard()
             }
-            Item { width: parent.width - primaryAction.width - parent.spacing; height: 1 }
+            Button {
+              id: cleanAction
+              text: root.words("limpiar texto", "clean text")
+              active: root.sourceText !== ""
+              tooltipText: root.words("Limpia el texto de la izquierda.", "Clean the text on the left.")
+              onClicked: root.cleanText()
+            }
+            Item { width: parent.width - clipboardAction.width - cleanAction.width - primaryAction.width - parent.spacing * 2; height: 1 }
             Button {
               id: primaryAction
               visible: root.changes > 0

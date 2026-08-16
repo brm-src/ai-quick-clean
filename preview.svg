@@ -7,24 +7,26 @@
   <circle cx="1370" cy="110" r="310" fill="#E0228F" fill-opacity=".11"/>
   <circle cx="120" cy="930" r="240" fill="#E0228F" fill-opacity=".07"/>
   <text x="100" y="112" fill="#F7F5F7" font-family="sans-serif" font-size="46" font-weight="700">aismell quick clean</text>
-  <text x="100" y="164" fill="#B7B1B7" font-family="sans-serif" font-size="25">review a safe cleanup before replacing your clipboard</text>
+  <text x="100" y="164" fill="#B7B1B7" font-family="sans-serif" font-size="25">paste, edit, then review a safe cleanup before replacing your clipboard</text>
   <g filter="url(#shadow)">
     <rect x="300" y="220" width="1000" height="610" rx="16" fill="#1A181C" stroke="#4E4750" stroke-width="2"/>
     <text x="350" y="292" fill="#F7F5F7" font-family="sans-serif" font-size="31" font-weight="700">aismell quick clean</text>
-    <text x="350" y="331" fill="#B7B1B7" font-family="sans-serif" font-size="19">Review the change before replacing your clipboard.</text>
+    <text x="350" y="331" fill="#B7B1B7" font-family="sans-serif" font-size="19">Paste or edit on the left. Nothing changes until you choose replace clipboard.</text>
     <text x="1250" y="295" fill="#E5DFE5" font-family="sans-serif" font-size="30">×</text>
     <rect x="350" y="365" width="900" height="1" fill="#4E4750"/>
     <text x="350" y="408" fill="#DED8DE" font-family="sans-serif" font-size="21">Removed 2 filler phrases.</text>
     <rect x="350" y="445" width="432" height="250" rx="11" fill="#242126" stroke="#4E4750"/>
-    <text x="377" y="483" fill="#A8A1A8" font-family="sans-serif" font-size="16" font-weight="700">ORIGINAL</text>
+    <text x="377" y="483" fill="#A8A1A8" font-family="sans-serif" font-size="16" font-weight="700">YOUR TEXT</text>
     <text x="377" y="540" fill="#DFD9DF" font-family="sans-serif" font-size="22">That said, the file is ready.</text>
     <text x="377" y="578" fill="#DFD9DF" font-family="sans-serif" font-size="22">In conclusion, thanks.</text>
     <rect x="818" y="445" width="432" height="250" rx="11" fill="#35152C" stroke="#E0228F" stroke-width="2"/>
     <text x="845" y="483" fill="#FFD1EB" font-family="sans-serif" font-size="16" font-weight="700">CLEAN VERSION</text>
     <text x="845" y="540" fill="#FFF6FC" font-family="sans-serif" font-size="22">The file is ready.</text>
     <text x="845" y="578" fill="#FFF6FC" font-family="sans-serif" font-size="22">Thanks.</text>
-    <rect x="350" y="735" width="228" height="54" rx="10" fill="#252227" stroke="#4E4750"/>
-    <text x="379" y="769" fill="#DED8DE" font-family="sans-serif" font-size="17">clean new clipboard</text>
+    <rect x="350" y="735" width="184" height="54" rx="10" fill="#252227" stroke="#4E4750"/>
+    <text x="378" y="769" fill="#DED8DE" font-family="sans-serif" font-size="17">use clipboard</text>
+    <rect x="548" y="735" width="174" height="54" rx="10" fill="#252227" stroke="#4E4750"/>
+    <text x="583" y="769" fill="#DED8DE" font-family="sans-serif" font-size="17">clean text</text>
     <rect x="1007" y="735" width="243" height="54" rx="10" fill="#E0228F"/>
     <text x="1035" y="769" fill="#1B0B16" font-family="sans-serif" font-size="17" font-weight="700">replace clipboard</text>
   </g>

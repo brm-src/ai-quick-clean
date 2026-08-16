@@ -4,7 +4,7 @@
 
 A small Omarchy shortcut for cleaning the text you just copied — without turning it into something else.
 
-`super + shift + s` opens a compact review: your original clipboard text is on the left and the safe cleanup is on the right. Nothing replaces your clipboard until you choose **replace clipboard**.
+`super + shift + s` opens a compact editor. Paste, type, or load the clipboard on the left; the safe cleanup appears on the right. Nothing replaces your clipboard until you choose **replace clipboard**.
 
 ## What it does
 
@@ -25,7 +25,7 @@ It is not a generative rewriter and it does not score your writing. If it cannot
 
 ## Local installation
 
-The plugin needs Omarchy/Hyprland, `wl-paste`, `wl-copy`, and a local copy of the [aismell](https://aismell.me) engine.
+The plugin needs Omarchy/Hyprland, `wl-paste`, and `wl-copy`. Its conservative cleanup engine is bundled, so it runs locally without a Python package, API key, or network connection.
 
 ```bash
 omarchy plugin install https://github.com/brm-src/aismell-quick-clean
