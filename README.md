@@ -40,7 +40,7 @@ bash ~/.config/omarchy/plugins/io.github.brm-src.aismell-quick-clean/setup.sh --
 
 ## Privacy
 
-The plugin reads the clipboard only after you choose **rewrite clipboard**. For a rewrite, it sends the text to aismell's Cloudflare-hosted service, which uses Workers AI. The application has no persistent storage and the response is `Cache-Control: no-store`, but this is still an online request to Cloudflare. The result is copied only when you choose **copy version**.
+The plugin reads the clipboard only after you choose **rewrite clipboard**. For a rewrite it sends the text to aismell's Cloudflare-hosted service (currently `https://aismell-rewrite.brmcl.workers.dev`, not `aismell.me`), which runs aismell's own detector and then Workers AI. The application has no persistent storage and the response is `Cache-Control: no-store`, but this is still an online request to Cloudflare. The result is copied only when you choose **copy version**.
 
 Do not use it for passwords, private keys, confidential client material, or anything you would not send to an online writing tool.
 

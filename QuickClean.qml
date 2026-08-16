@@ -26,7 +26,7 @@ Item {
     switch (payload.errorCode) {
       case "empty": return root.words("Pega o escribe un texto antes de reescribirlo.", "Paste or type text before rewriting it.")
       case "too-long": return root.words("Este atajo admite hasta 3.000 caracteres.", "This shortcut accepts up to 3,000 characters.")
-      case "rewrite-unavailable": return root.words("No pude conectar con aismell.me. Intenta otra vez.", "I could not reach aismell.me. Try again.")
+      case "rewrite-unavailable": return root.words("No pude conectar con el servicio de aismell. Intenta otra vez.", "I could not reach the aismell service. Try again.")
       case "nothing-to-copy": return root.words("No hay una versión reescrita para copiar.", "There is no rewritten version to copy.")
       case "clipboard-failed": return root.words("No pude acceder al portapapeles.", "I could not access the clipboard.")
       default: return root.words("No pude completar esa acción.", "I could not complete that action.")
@@ -211,7 +211,7 @@ Item {
               }
               Text {
                 width: parent.width
-                text: root.words("Envía el texto a aismell.me para reescribirlo. No se guarda.", "Sends text to aismell.me to rewrite it. It is not stored.")
+                text: root.words("Envía el texto al servicio de aismell (Cloudflare). No se guarda.", "Sends text to aismell's Cloudflare service. It is not stored.")
                 color: Color.menu.text
                 opacity: 0.46
                 font.family: Style.font.menuFamily
@@ -389,7 +389,7 @@ Item {
             Button {
               id: clipboardAction
               text: root.words("reescribir portapapeles", "rewrite clipboard")
-              tooltipText: root.words("Envía lo que acabas de copiar a aismell.me para una versión más directa.", "Send what you copied to aismell.me for a more direct version.")
+              tooltipText: root.words("Envía lo que acabas de copiar al servicio de aismell para una versión más directa.", "Send what you copied to aismell's service for a more direct version.")
               bordered: true
               active: !root.busy
               onClicked: root.rewriteClipboard()
@@ -398,7 +398,7 @@ Item {
               id: cleanAction
               text: root.words("reescribir texto", "rewrite text")
               active: root.sourceText !== "" && !root.busy
-              tooltipText: root.words("Envía el texto de la izquierda a aismell.me para una versión más directa.", "Send the text on the left to aismell.me for a more direct version.")
+              tooltipText: root.words("Envía el texto de la izquierda al servicio de aismell para una versión más directa.", "Send the text on the left to aismell's service for a more direct version.")
               onClicked: root.rewriteText()
             }
             Item { width: parent.width - clipboardAction.width - cleanAction.width - primaryAction.width - parent.spacing * 2; height: 1 }
