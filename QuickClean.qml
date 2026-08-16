@@ -411,17 +411,8 @@ Item {
               onClicked: root.copyCleanText()
             }
             Item {
-              width: Math.max(0, parent.width - cleanAction.width - (copyAction.visible ? copyAction.width + parent.spacing : 0) - privacyNote.width - parent.spacing)
+              width: Math.max(0, parent.width - cleanAction.width - (copyAction.visible ? copyAction.width + parent.spacing : 0))
               height: 1
-            }
-            Text {
-              id: privacyNote
-              anchors.verticalCenter: parent.verticalCenter
-              text: root.words("Se procesa en internet. No se guarda.", "Processed online. Not stored.")
-              color: Color.menu.text
-              opacity: 0.42
-              font.family: Style.font.menuFamily
-              font.pixelSize: Style.font.bodySmall
             }
           }
         }

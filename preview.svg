@@ -7,32 +7,29 @@
   <circle cx="1370" cy="110" r="310" fill="#E0228F" fill-opacity=".11"/>
   <circle cx="120" cy="930" r="240" fill="#E0228F" fill-opacity=".07"/>
   <text x="100" y="112" fill="#F7F5F7" font-family="sans-serif" font-size="46" font-weight="700">aismell quick clean</text>
-  <text x="100" y="164" fill="#B7B1B7" font-family="sans-serif" font-size="25">rewrite a short draft, compare the proposal, then decide</text>
+  <text x="100" y="164" fill="#B7B1B7" font-family="sans-serif" font-size="25">strip AI-sounding filler from short drafts</text>
   <g filter="url(#shadow)">
     <rect x="300" y="220" width="1000" height="610" rx="16" fill="#1A181C" stroke="#4E4750" stroke-width="2"/>
-    <text x="350" y="292" fill="#F7F5F7" font-family="sans-serif" font-size="31" font-weight="700">aismell quick clean</text>
-    <text x="350" y="331" fill="#B7B1B7" font-family="sans-serif" font-size="19">aismell proposes a direct version. You decide whether to use it.</text>
-    <text x="350" y="354" fill="#8E878E" font-family="sans-serif" font-size="16">Sent to aismell's rewrite service · not stored.</text>
+    <text x="350" y="292" fill="#F7F5F7" font-family="sans-serif" font-size="31" font-weight="700">Strip AI waffle</text>
+    <text x="350" y="331" fill="#B7B1B7" font-family="sans-serif" font-size="18">Removes stock phrases, repeated formulas, and extra adjectives.</text>
+    <text x="350" y="356" fill="#B7B1B7" font-family="sans-serif" font-size="18">Keeps the message, names, links, numbers, and register.</text>
     <text x="1250" y="295" fill="#E5DFE5" font-family="sans-serif" font-size="30">×</text>
-    <rect x="350" y="374" width="900" height="1" fill="#4E4750"/>
-    <text x="350" y="414" fill="#DED8DE" font-family="sans-serif" font-size="21">Direct version ready. Review it before copying.</text>
-    <text x="350" y="440" fill="#A8A1A8" font-family="sans-serif" font-size="16">1 proposed change · the original stays editable.</text>
+    <rect x="350" y="382" width="900" height="1" fill="#4E4750"/>
+    <text x="350" y="425" fill="#DED8DE" font-family="sans-serif" font-size="21">Done. Compare it and copy if you like it.</text>
     <rect x="350" y="458" width="432" height="238" rx="11" fill="#242126" stroke="#4E4750"/>
     <text x="377" y="496" fill="#A8A1A8" font-family="sans-serif" font-size="16" font-weight="700">YOUR TEXT</text>
     <text x="377" y="544" fill="#DFD9DF" font-family="sans-serif" font-size="21">It is important to note that</text>
     <text x="377" y="576" fill="#DFD9DF" font-family="sans-serif" font-size="21">the file is ready. In conclusion,</text>
     <text x="377" y="608" fill="#DFD9DF" font-family="sans-serif" font-size="21">thanks.</text>
     <rect x="818" y="458" width="432" height="238" rx="11" fill="#35152C" stroke="#E0228F" stroke-width="2"/>
-    <text x="845" y="496" fill="#FFD1EB" font-family="sans-serif" font-size="16" font-weight="700">PROPOSED VERSION</text>
+    <text x="845" y="496" fill="#FFD1EB" font-family="sans-serif" font-size="16" font-weight="700">CLEANED UP</text>
     <text x="845" y="544" fill="#FFF6FC" font-family="sans-serif" font-size="21">The file is ready. Thanks.</text>
     <text x="845" y="592" fill="#E9CFE0" font-family="sans-serif" font-size="16">Removed empty framing and conclusion.</text>
-    <rect x="350" y="735" width="228" height="54" rx="10" fill="#252227" stroke="#4E4750"/>
-    <text x="367" y="769" fill="#DED8DE" font-family="sans-serif" font-size="15">rewrite clipboard</text>
-    <rect x="594" y="735" width="174" height="54" rx="10" fill="#252227" stroke="#4E4750"/>
-    <text x="615" y="769" fill="#DED8DE" font-family="sans-serif" font-size="16">rewrite text</text>
-    <rect x="1040" y="735" width="210" height="54" rx="10" fill="#E0228F"/>
-    <text x="1082" y="769" fill="#1B0B16" font-family="sans-serif" font-size="16" font-weight="700">copy version</text>
+    <rect x="350" y="735" width="138" height="54" rx="10" fill="#252227" stroke="#4E4750"/>
+    <text x="392" y="769" fill="#DED8DE" font-family="sans-serif" font-size="17">clean</text>
+    <rect x="1110" y="735" width="140" height="54" rx="10" fill="#E0228F"/>
+    <text x="1161" y="769" fill="#1B0B16" font-family="sans-serif" font-size="17" font-weight="700">copy</text>
   </g>
   <rect x="100" y="890" width="265" height="1" fill="#E0228F"/>
-  <text x="100" y="940" fill="#C5BFC5" font-family="sans-serif" font-size="22">super + shift + s · online rewrite · English and Spanish</text>
+  <text x="100" y="940" fill="#C5BFC5" font-family="sans-serif" font-size="22">bar button · super + shift + s · English and Spanish</text>
 </svg>
