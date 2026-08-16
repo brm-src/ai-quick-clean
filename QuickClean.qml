@@ -16,17 +16,18 @@ Item {
   property bool hasResult: false
   property string uiLanguage: Qt.locale().name.toLowerCase().startsWith("es") ? "es" : "en"
   property string sourceText: ""
-  property string cleanedText: ""
-  property var edits: []
-  property string status: words("Copia algo y presiona limpiar.", "Copy something, then clean it.")
+  property var findings: []
+  property string status: words("Copia algo y presiona revisar.", "Copy something, then review it.")
+  property int score: 0
   property int changes: 0
   property var callback: null
 
   function words(es, en) { return root.isSpanish ? es : en }
   function errorText(payload) {
     switch (payload.errorCode) {
-      case "empty": return root.words("Pega o escribe un texto antes de limpiar.", "Paste or type text before cleaning.")
+      case "empty": return root.words("Pega o escribe un texto antes de revisarlo.", "Paste or type text before reviewing it.")
       case "too-long": return root.words("Este atajo admite hasta 3.000 caracteres.", "This shortcut accepts up to 3,000 characters.")
+      case "engine-missing": return root.words("No encontré el motor local de aismell.", "I could not find the local aismell engine.")
       case "nothing-to-copy": return root.words("No hay una propuesta para copiar.", "There is no proposal to copy.")
       case "clipboard-failed": return root.words("No pude acceder al portapapeles.", "I could not access the clipboard.")
       default: return root.words("No pude completar esa acción.", "I could not complete that action.")
@@ -37,10 +38,10 @@ Item {
     root.opened = true
     root.hasResult = false
     root.sourceText = ""
-    root.cleanedText = ""
-    root.edits = []
+    root.findings = []
+    root.score = 0
     root.changes = 0
-    root.status = root.words("Pega o escribe un texto corto.", "Paste or type a short text.")
+    root.status = root.words("Pega o escribe un texto corto para revisarlo.", "Paste or type a short text to review.")
   }
 
   function close() {
@@ -78,46 +79,46 @@ Item {
     root.callback = null
   }
 
-  function cleanClipboard() {
-    root.status = root.words("Leyendo y limpiando el portapapeles…", "Reading and cleaning the clipboard…")
-    root.runHelper("clean-clipboard", "", function(payload) {
-      root.applyCleanPayload(payload)
+  function reviewClipboard() {
+    root.status = root.words("aismell está revisando el portapapeles…", "aismell is reviewing the clipboard…")
+    root.runHelper("analyze-clipboard", "", function(payload) {
+      root.applyAnalysisPayload(payload)
     })
   }
 
-  function cleanText() {
+  function reviewText() {
     if (!root.sourceText.trim()) {
-      root.status = root.words("Pega o escribe un texto antes de limpiar.", "Paste or type text before cleaning.")
+      root.status = root.words("Pega o escribe un texto antes de revisarlo.", "Paste or type text before reviewing it.")
       return
     }
-    root.status = root.words("Buscando cambios seguros…", "Looking for safe changes…")
-    root.runHelper("clean-stdin", root.sourceText, function(payload) {
-      root.applyCleanPayload(payload)
+    root.status = root.words("aismell está buscando señales reales…", "aismell is looking for real signals…")
+    root.runHelper("analyze-stdin", root.sourceText, function(payload) {
+      root.applyAnalysisPayload(payload)
     })
   }
 
-  function applyCleanPayload(payload) {
+  function applyAnalysisPayload(payload) {
     if (!payload.ok) {
       root.hasResult = false
-      root.cleanedText = ""
-      root.edits = []
+      root.findings = []
+      root.score = 0
       root.changes = 0
       root.status = root.errorText(payload)
       return
     }
     root.uiLanguage = payload.language === "es" ? "es" : "en"
     root.sourceText = String(payload.source || "")
-    root.cleanedText = String(payload.text || "")
-    root.edits = payload.edits || []
-    root.changes = Number(payload.changes || 0)
+    root.findings = payload.findings || []
+    root.score = Number(payload.score || 0)
+    root.changes = root.findings.length
     root.hasResult = true
-    root.status = payload.message || root.words("Resultado listo.", "Result ready.")
+    root.status = payload.message || root.words("Revisión lista.", "Review ready.")
   }
 
-  function copyClean() {
-    root.runHelper("copy-stdin", root.cleanedText, function(payload) {
+  function copyEditedText() {
+    root.runHelper("copy-stdin", root.sourceText, function(payload) {
       root.status = payload.ok
-        ? root.words("Texto limpio copiado.", "Clean text copied.")
+        ? root.words("Texto editado copiado.", "Edited text copied.")
         : root.errorText(payload)
     })
   }
@@ -164,7 +165,7 @@ Item {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
     Keys.onEscapePressed: root.close()
-    Keys.onReturnPressed: if (event.modifiers & Qt.ControlModifier) root.cleanText()
+    Keys.onReturnPressed: if (event.modifiers & Qt.ControlModifier) root.reviewText()
 
     BorderSurface {
         id: card
@@ -204,7 +205,7 @@ Item {
               }
               Text {
                 width: parent.width
-                text: root.words("Mira el cambio antes de reemplazar el portapapeles.", "Review the change before replacing your clipboard.")
+                text: root.words("aismell marca lo que merece atención; tú decides qué reescribir.", "aismell marks what deserves attention; you decide what to rewrite.")
                 color: Color.menu.text
                 opacity: 0.62
                 font.family: Style.font.menuFamily
@@ -233,7 +234,7 @@ Item {
 
           Text {
             width: parent.width
-            text: root.busy ? root.words("Limpiando…", "Cleaning…") : root.status
+            text: root.busy ? root.words("Revisando con aismell…", "Reviewing with aismell…") : root.status
             color: root.changes > 0 ? Color.menu.text : Color.menu.text
             opacity: root.changes > 0 ? 0.82 : 0.62
             font.family: Style.font.menuFamily
@@ -242,9 +243,9 @@ Item {
           }
 
           Text {
-            visible: root.edits.length > 0
+            visible: root.hasResult
             width: parent.width
-            text: root.words("Se quitará: ", "Will remove: ") + root.edits.map(function(edit) { return "“" + edit.removed + "”" }).join(" · ")
+            text: root.words("Índice de señales: ", "Signal index: ") + root.score + "/100 · " + root.changes + root.words(" hallazgo(s) concreto(s).", " concrete finding(s).")
             color: Color.menu.text
             opacity: 0.58
             font.family: Style.font.menuFamily
@@ -304,10 +305,10 @@ Item {
                       if (activeFocus && text !== root.sourceText) {
                         root.sourceText = text
                         root.hasResult = false
-                        root.cleanedText = ""
-                        root.edits = []
+                        root.findings = []
+                        root.score = 0
                         root.changes = 0
-                        root.status = root.words("Listo para una pasada segura.", "Ready for a safe cleanup pass.")
+                        root.status = root.words("Listo para revisar con aismell.", "Ready for an aismell review.")
                       }
                     }
                     Text {
@@ -340,34 +341,75 @@ Item {
                 anchors.leftMargin: parent.contentLeftInset
                 spacing: Style.spacing.sm
                 Text {
-                  text: root.words("versión limpia", "clean version")
+                  text: root.words("señales de aismell", "aismell signals")
                   color: root.changes > 0 ? Style.selectedStateColor(Color.menu.text, Color.accent) : Color.menu.text
                   opacity: root.changes > 0 ? 1 : 0.56
                   font.family: Style.font.menuFamily
                   font.pixelSize: Style.font.bodySmall
                   font.bold: true
                 }
-                Flickable {
-                  id: cleanedScroll
+                Item {
                   width: parent.width
                   height: parent.height - y
-                  contentWidth: width
-                  contentHeight: Math.max(height, cleanedEditor.height)
-                  clip: true
-
-                  TextEdit {
-                    id: cleanedEditor
-                    width: cleanedScroll.width
-                    height: Math.max(cleanedScroll.height, contentHeight)
-                    text: root.hasResult ? root.cleanedText : root.words("Limpia el texto para ver una propuesta.", "Clean the text to see a suggestion.")
-                    color: root.changes > 0 ? Style.selectedStateColor(Color.menu.text, Color.accent) : Color.menu.text
-                    opacity: root.hasResult ? 1 : 0.48
+                  ListView {
+                    anchors.fill: parent
+                    visible: root.findings.length > 0
+                    clip: true
+                    spacing: Style.spacing.sm
+                    model: root.findings
+                    delegate: Column {
+                      required property var modelData
+                      width: parent.width
+                      spacing: Style.spacing.xs
+                      Text {
+                        width: parent.width
+                        text: "“" + modelData.matched + "”"
+                        color: Style.selectedStateColor(Color.menu.text, Color.accent)
+                        font.family: Style.font.menuFamily
+                        font.pixelSize: Style.font.body
+                        font.bold: true
+                        wrapMode: Text.Wrap
+                      }
+                      Text {
+                        width: parent.width
+                        text: modelData.message
+                        color: Color.menu.text
+                        opacity: 0.76
+                        font.family: Style.font.menuFamily
+                        font.pixelSize: Style.font.bodySmall
+                        wrapMode: Text.Wrap
+                      }
+                      Text {
+                        width: parent.width
+                        text: "→ " + modelData.suggestion
+                        color: Color.menu.text
+                        opacity: 0.58
+                        font.family: Style.font.menuFamily
+                        font.pixelSize: Style.font.bodySmall
+                        wrapMode: Text.Wrap
+                      }
+                      Rectangle { width: parent.width; height: 1; color: Color.menu.border; opacity: 0.5 }
+                    }
+                  }
+                  Text {
+                    anchors.fill: parent
+                    visible: root.hasResult && root.findings.length === 0
+                    text: root.words("Nada fuerte que corregir. Tu texto queda como está.", "Nothing strong to correct. Your text stays as it is.")
+                    color: Color.menu.text
+                    opacity: 0.58
                     font.family: Style.font.menuFamily
                     font.pixelSize: Style.font.body
-                    wrapMode: TextEdit.Wrap
-                    readOnly: true
-                    selectByMouse: true
-                    textFormat: TextEdit.PlainText
+                    wrapMode: Text.Wrap
+                  }
+                  Text {
+                    anchors.fill: parent
+                    visible: !root.hasResult
+                    text: root.words("Revisa el texto para ver señales reales de aismell y sugerencias concretas.", "Review the text to see real aismell signals and concrete suggestions.")
+                    color: Color.menu.text
+                    opacity: 0.48
+                    font.family: Style.font.menuFamily
+                    font.pixelSize: Style.font.body
+                    wrapMode: Text.Wrap
                   }
                 }
               }
@@ -381,28 +423,28 @@ Item {
 
             Button {
               id: clipboardAction
-              text: root.words("usar portapapeles", "use clipboard")
-              tooltipText: root.words("Limpia lo que acabas de copiar.", "Clean what you just copied.")
+              text: root.words("revisar portapapeles", "review clipboard")
+              tooltipText: root.words("Busca señales reales de aismell en lo que acabas de copiar.", "Find real aismell signals in what you just copied.")
               bordered: true
               active: !root.busy
-              onClicked: root.cleanClipboard()
+              onClicked: root.reviewClipboard()
             }
             Button {
               id: cleanAction
-              text: root.words("limpiar texto", "clean text")
+              text: root.words("revisar texto", "review text")
               active: root.sourceText !== "" && !root.busy
-              tooltipText: root.words("Limpia el texto de la izquierda.", "Clean the text on the left.")
-              onClicked: root.cleanText()
+              tooltipText: root.words("Busca señales de aismell en el texto de la izquierda.", "Find aismell signals in the text on the left.")
+              onClicked: root.reviewText()
             }
             Item { width: parent.width - clipboardAction.width - cleanAction.width - primaryAction.width - parent.spacing * 2; height: 1 }
             Button {
               id: primaryAction
-              visible: root.changes > 0
+              visible: root.sourceText !== ""
               active: !root.busy
               selected: true
-              text: root.words("reemplazar portapapeles", "replace clipboard")
-              tooltipText: root.words("Copia la versión limpia.", "Copy the clean version.")
-              onClicked: root.copyClean()
+              text: root.words("copiar texto editado", "copy edited text")
+              tooltipText: root.words("Copia el texto de la izquierda después de tu edición.", "Copy the text on the left after your edit.")
+              onClicked: root.copyEditedText()
             }
           }
         }

@@ -1,47 +1,67 @@
 #!/usr/bin/env python3
-"""Bridge the Omarchy overlay to aismell's conservative short-text cleaner."""
+"""Bridge the Omarchy panel to aismell's actual local analysis engine."""
 
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
-
-from aismell_cleaner import clean
+from pathlib import Path
+from typing import Any
 
 MAX_CHARS = 3_000
+DEFAULT_ENGINE_HOME = Path.home() / "Developer" / "aismell"
 
 
-def clean_payload(text: str) -> dict[str, object]:
-    """Return a stable desktop payload without exposing detector internals."""
+def _engine() -> tuple[Any | None, str | None]:
+    """Load the real aismell analyzer, never a second set of guessed rules."""
+    engine_home = Path(os.environ.get("AISMELL_HOME", DEFAULT_ENGINE_HOME)).expanduser()
+    if engine_home.is_dir() and str(engine_home) not in sys.path:
+        sys.path.insert(0, str(engine_home))
+    try:
+        from aismell.core import analyze
+    except (ImportError, SystemExit):
+        return None, "engine-missing"
+    return analyze, None
+
+
+def analyze_payload(text: str) -> dict[str, object]:
+    """Return actual high-confidence aismell findings for a short editable text."""
     if not text.strip():
         return {"ok": False, "errorCode": "empty"}
     if len(text) > MAX_CHARS:
         return {"ok": False, "errorCode": "too-long"}
 
-    result = clean(text)
-    if result.language == "es":
-        if result.changes == 1:
-            message = "Quité 1 frase de relleno."
-        elif result.changes:
-            message = f"Quité {result.changes} frases de relleno."
-        else:
-            message = "No encontré relleno seguro para quitar."
+    analyze, error = _engine()
+    if error:
+        return {"ok": False, "errorCode": error}
+
+    report, language = analyze(text, strict=True, include_segments=False)
+    findings = [
+        {
+            "id": hit.pattern.id,
+            "matched": hit.matched,
+            "severity": hit.pattern.severity,
+            "message": hit.pattern.message,
+            "suggestion": hit.pattern.suggestion,
+            "line": hit.line,
+            "column": hit.col,
+        }
+        for hit in report.hits
+    ]
+    count = len(findings)
+    if language == "es":
+        message = "No vi una señal fuerte en este texto." if not count else f"aismell marcó {count} señal{'es' if count != 1 else ''} para revisar."
     else:
-        if result.changes == 1:
-            message = "Removed 1 filler phrase."
-        elif result.changes:
-            message = f"Removed {result.changes} filler phrases."
-        else:
-            message = "No safe filler to remove."
+        message = "No strong aismell signal found in this text." if not count else f"aismell found {count} signal{'s' if count != 1 else ''} to review."
     return {
         "ok": True,
         "source": text,
-        "text": result.text,
-        "changes": result.changes,
-        "edits": [{"removed": edit.removed} for edit in result.edits],
+        "language": language,
+        "score": round(report.score * 100),
+        "findings": findings,
         "message": message,
-        "language": result.language,
     }
 
 
@@ -67,10 +87,6 @@ def _read_stdin_text() -> str:
         chunks.append(character)
 
 
-def clean_clipboard() -> dict[str, object]:
-    return clean_payload(_read_clipboard())
-
-
 def copy_text(text: str) -> dict[str, object]:
     if not text:
         return {"ok": False, "errorCode": "nothing-to-copy"}
@@ -83,17 +99,15 @@ def copy_text(text: str) -> dict[str, object]:
         text=True,
         timeout=3,
     )
-    if completed.returncode:
-        return {"ok": False, "errorCode": "clipboard-failed"}
-    return {"ok": True}
+    return {"ok": True} if not completed.returncode else {"ok": False, "errorCode": "clipboard-failed"}
 
 
 def main(argv: list[str] | None = None) -> int:
     command = (argv or sys.argv[1:])[:1]
-    if command == ["clean-clipboard"]:
-        payload = clean_clipboard()
-    elif command == ["clean-stdin"]:
-        payload = clean_payload(_read_stdin_text())
+    if command == ["analyze-clipboard"]:
+        payload = analyze_payload(_read_clipboard())
+    elif command == ["analyze-stdin"]:
+        payload = analyze_payload(_read_stdin_text())
     elif command == ["copy-stdin"]:
         payload = copy_text(_read_stdin_text())
     else:

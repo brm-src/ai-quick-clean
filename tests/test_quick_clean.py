@@ -1,4 +1,4 @@
-"""Contract tests for the aismell quick-clean desktop helper."""
+"""Contract tests for the aismell quick-review desktop helper."""
 
 import io
 import json
@@ -9,63 +9,45 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
 import quick_clean
-from aismell_cleaner import clean
-from quick_clean import clean_payload, main
+from quick_clean import analyze_payload, main
 
 
-def test_returns_cleaned_text_and_a_concise_change_summary():
-    payload = clean_payload("Hola, cabe mencionar que ya envié el archivo.")
+def test_uses_aismells_actual_span_and_editorial_suggestion():
+    payload = analyze_payload("It is important to note that the file is ready.")
 
-    assert payload == {
-        "ok": True,
-        "text": "Hola, ya envié el archivo.",
-        "source": "Hola, cabe mencionar que ya envié el archivo.",
-        "changes": 1,
-        "edits": [{"removed": "cabe mencionar que"}],
-        "message": "Quité 1 frase de relleno.",
-        "language": "es",
-    }
-
-
-def test_returns_an_english_summary_for_english_text():
-    payload = clean_payload("It is important to note that the file is ready. In conclusion, thanks.")
-
-    assert payload == {
-        "ok": True,
-        "text": "The file is ready. Thanks.",
-        "source": "It is important to note that the file is ready. In conclusion, thanks.",
-        "changes": 2,
-        "edits": [
-            {"removed": "It is important to note that"},
-            {"removed": "In conclusion"},
-        ],
-        "message": "Removed 2 filler phrases.",
-        "language": "en",
-    }
+    assert payload["ok"] is True
+    assert payload["source"] == "It is important to note that the file is ready."
+    assert payload["language"] == "en"
+    assert payload["findings"] == [{
+        "id": "en.important_to_note",
+        "matched": "It is important to note",
+        "severity": 3,
+        "message": '"important to note" — meta-announcement',
+        "suggestion": "delete and state the point",
+        "line": 1,
+        "column": 0,
+    }]
 
 
-def test_cleans_edited_text_received_on_standard_input(monkeypatch, capsys):
-    monkeypatch.setattr(sys, "stdin", io.StringIO("Here's the thing: the file is ready.\x1e"))
+def test_reports_multiple_real_aismell_signals_without_rewriting_the_text():
+    source = "No es solo una herramienta, sino que también es un punto clave."
+    payload = analyze_payload(source)
 
-    assert main(["clean-stdin"]) == 0
-
-    payload = json.loads(capsys.readouterr().out)
-    assert payload["source"] == "Here's the thing: the file is ready."
-    assert payload["text"] == "The file is ready."
-
-
-def test_explains_the_exact_safe_removal_without_touching_quotes_or_markdown():
-    result = clean('"In conclusion, keep this."\n- In conclusion, keep this too.\nIt is important to note that the file is ready.')
-
-    assert result.text == '"In conclusion, keep this."\n- In conclusion, keep this too.\nThe file is ready.'
-    assert [edit.removed for edit in result.edits] == ["It is important to note that"]
+    assert payload["ok"] is True
+    assert payload["source"] == source
+    assert payload["findings"][0]["id"] == "es.no_solo_sino"
+    assert payload["findings"][0]["suggestion"] == "di la idea positiva sin el contraste de relleno"
 
 
-def test_cleaning_edited_text_never_writes_a_state_file(monkeypatch, capsys):
+def test_analyzes_edited_text_received_on_standard_input(monkeypatch, capsys):
     monkeypatch.setattr(sys, "stdin", io.StringIO("It is important to note that the file is ready.\x1e"))
 
-    assert main(["clean-stdin"]) == 0
+    assert main(["analyze-stdin"]) == 0
 
-    assert not hasattr(quick_clean, "STATE_FILE")
     payload = json.loads(capsys.readouterr().out)
-    assert payload["text"] == "The file is ready."
+    assert payload["source"] == "It is important to note that the file is ready."
+    assert payload["findings"][0]["id"] == "en.important_to_note"
+
+
+def test_keeps_text_in_memory_without_a_state_file():
+    assert not hasattr(quick_clean, "STATE_FILE")

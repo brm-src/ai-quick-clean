@@ -2,30 +2,31 @@
 
 ![aismell quick clean preview](preview.png)
 
-A small Omarchy shortcut for cleaning the text you just copied — without turning it into something else.
+A small Omarchy shortcut that brings aismell's real local review into the place where you write.
 
-`super + shift + s` opens a compact editor. Paste, type, or load the clipboard on the left; the conservative proposal appears on the right. It lists the exact phrases it proposes to remove. Nothing replaces your clipboard until you choose **replace clipboard**.
+`super + shift + s` opens a compact editor. Paste, type, or load the clipboard; aismell shows the exact high-confidence signals it sees, why it flagged them, and its editorial suggestion. You make the edit — then copy your text when it sounds like you.
 
 ## What it does
 
 - Works with short English and Spanish messages, emails, and paragraphs (up to 3,000 characters).
-- Removes only high-confidence framing; discourse that can carry meaning stays intact.
-- Preserves names, dates, links, quotes, code, Markdown lists, and blockquotes.
-- Shows the exact phrases proposed for removal and keeps the clipboard untouched until you decide.
+- Calls aismell's actual high-confidence detector, including its current pattern catalog.
+- Shows the matched phrase, why it was flagged, and the engine's editorial suggestion.
+- Keeps the text editable: review, rewrite in your own words, then copy the result.
 
-It is not a generative rewriter and it does not score your writing. If it cannot make a safe edit, it leaves the text alone.
+It is not a generative rewriter. That is deliberate: aismell points to concrete signals; it does not invent a replacement and pretend it knows your intent.
 
 ## Use
 
 1. Copy text, or open it empty and paste/type directly.
-2. Press `super + shift + s` and choose **clean text**.
-3. Inspect the exact removals and the proposal, then select **replace clipboard** only if you want it.
+2. Press `super + shift + s` and choose **review text**.
+3. Use the signals and suggestions on the right to revise in the editor.
+4. Choose **copy edited text** when you are ready.
 
-`escape` closes the window. `ctrl + enter` runs a new cleanup pass.
+`escape` closes the window. `ctrl + enter` runs a new review.
 
 ## Local installation
 
-The plugin needs Omarchy/Hyprland, `wl-paste`, and `wl-copy`. Its conservative cleanup engine is bundled, so it runs locally without a Python package, API key, or network connection.
+The plugin needs Omarchy/Hyprland, `wl-paste`, `wl-copy`, and the local aismell engine. It looks for `~/Developer/aismell` by default; set `AISMELL_HOME` if your checkout is elsewhere. aismell requires Python 3.9+ and PyYAML. No API key or network connection is used.
 
 ```bash
 omarchy plugin install https://github.com/brm-src/aismell-quick-clean
@@ -50,11 +51,11 @@ omarchy plugin validate .
 
 ## Privacy
 
-The plugin reads text from the clipboard only when you choose **use clipboard**. It processes the text locally, does not send it over the network, and does not save it to disk. The result remains in the open review until you explicitly replace the clipboard.
+The plugin reads text from the clipboard only when you choose **review clipboard**. It runs aismell locally, does not send text over the network, and does not save it to disk. Your edited text is copied only when you choose **copy edited text**.
 
 ## Español
 
-Funciona con mensajes, correos y párrafos cortos en español e inglés. Quita relleno seguro sin reescribir el contenido ni enviar el texto a una API. Copia un texto y usa `super + shift + s`; compara ambas versiones y elige **reemplazar portapapeles** solo si te sirve.
+Funciona con mensajes, correos y párrafos cortos en español e inglés. Usa el motor local de aismell para mostrar señales reales, la frase marcada y una sugerencia concreta. No reescribe ni envía el texto a una API: tú editas el texto y eliges cuándo copiarlo.
 
 ## License
 
