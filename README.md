@@ -4,24 +4,24 @@
 
 A small Omarchy shortcut for cleaning the text you just copied — without turning it into something else.
 
-`super + shift + s` opens a compact editor. Paste, type, or load the clipboard on the left; the safe cleanup appears on the right. Nothing replaces your clipboard until you choose **replace clipboard**.
+`super + shift + s` opens a compact editor. Paste, type, or load the clipboard on the left; the conservative proposal appears on the right. It lists the exact phrases it proposes to remove. Nothing replaces your clipboard until you choose **replace clipboard**.
 
 ## What it does
 
-- Works with short English and Spanish messages, emails, and paragraphs.
-- Removes empty framing, inflated introductions, and generic closers only when the edit is safe.
-- Preserves tone, names, dates, links, quotes, code, and lists.
-- Shows its summary and controls in the language of the text after cleaning.
+- Works with short English and Spanish messages, emails, and paragraphs (up to 3,000 characters).
+- Removes only high-confidence framing; discourse that can carry meaning stays intact.
+- Preserves names, dates, links, quotes, code, Markdown lists, and blockquotes.
+- Shows the exact phrases proposed for removal and keeps the clipboard untouched until you decide.
 
 It is not a generative rewriter and it does not score your writing. If it cannot make a safe edit, it leaves the text alone.
 
 ## Use
 
-1. Copy text.
-2. Press `super + shift + s`.
-3. Compare the original and cleaned version, then select **replace clipboard** only if you want it.
+1. Copy text, or open it empty and paste/type directly.
+2. Press `super + shift + s` and choose **clean text**.
+3. Inspect the exact removals and the proposal, then select **replace clipboard** only if you want it.
 
-`escape` closes the window. `ctrl + enter` copies the result.
+`escape` closes the window. `ctrl + enter` runs a new cleanup pass.
 
 ## Local installation
 
@@ -50,7 +50,7 @@ omarchy plugin validate .
 
 ## Privacy
 
-The plugin reads text from the clipboard. The cleaned result is temporarily saved at `~/.local/state/aismell-quick-clean/latest.txt` with user-only permissions so the **copy clean** button can write it back to the clipboard. It is replaced every time you clean text.
+The plugin reads text from the clipboard only when you choose **use clipboard**. It processes the text locally, does not send it over the network, and does not save it to disk. The result remains in the open review until you explicitly replace the clipboard.
 
 ## Español
 

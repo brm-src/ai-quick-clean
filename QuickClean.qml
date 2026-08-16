@@ -17,17 +17,28 @@ Item {
   property string uiLanguage: Qt.locale().name.toLowerCase().startsWith("es") ? "es" : "en"
   property string sourceText: ""
   property string cleanedText: ""
+  property var edits: []
   property string status: words("Copia algo y presiona limpiar.", "Copy something, then clean it.")
   property int changes: 0
   property var callback: null
 
   function words(es, en) { return root.isSpanish ? es : en }
+  function errorText(payload) {
+    switch (payload.errorCode) {
+      case "empty": return root.words("Pega o escribe un texto antes de limpiar.", "Paste or type text before cleaning.")
+      case "too-long": return root.words("Este atajo admite hasta 3.000 caracteres.", "This shortcut accepts up to 3,000 characters.")
+      case "nothing-to-copy": return root.words("No hay una propuesta para copiar.", "There is no proposal to copy.")
+      case "clipboard-failed": return root.words("No pude acceder al portapapeles.", "I could not access the clipboard.")
+      default: return root.words("No pude completar esa acción.", "I could not complete that action.")
+    }
+  }
 
   function open() {
     root.opened = true
     root.hasResult = false
     root.sourceText = ""
     root.cleanedText = ""
+    root.edits = []
     root.changes = 0
     root.status = root.words("Pega o escribe un texto corto.", "Paste or type a short text.")
   }
@@ -35,6 +46,7 @@ Item {
   function close() {
     root.opened = false
     root.busy = false
+    root.callback = null
   }
 
   function toggle() {
@@ -88,23 +100,25 @@ Item {
     if (!payload.ok) {
       root.hasResult = false
       root.cleanedText = ""
+      root.edits = []
       root.changes = 0
-      root.status = payload.error || root.words("No pude limpiar ese texto.", "I could not clean that text.")
+      root.status = root.errorText(payload)
       return
     }
     root.uiLanguage = payload.language === "es" ? "es" : "en"
     root.sourceText = String(payload.source || "")
     root.cleanedText = String(payload.text || "")
+    root.edits = payload.edits || []
     root.changes = Number(payload.changes || 0)
     root.hasResult = true
     root.status = payload.message || root.words("Resultado listo.", "Result ready.")
   }
 
   function copyClean() {
-    root.runHelper("copy-latest", "", function(payload) {
+    root.runHelper("copy-stdin", root.cleanedText, function(payload) {
       root.status = payload.ok
         ? root.words("Texto limpio copiado.", "Clean text copied.")
-        : (payload.error || root.words("No pude copiar el texto limpio.", "I could not copy the clean text."))
+        : root.errorText(payload)
     })
   }
 
@@ -138,34 +152,21 @@ Item {
     }
   }
 
-  Variants {
-    model: Quickshell.screens
+  PanelWindow {
+    id: panel
+    screen: Quickshell.screens[0]
+    visible: root.opened
+    anchors { top: true; bottom: true; left: true; right: true }
+    color: "transparent"
+    exclusionMode: ExclusionMode.Ignore
+    WlrLayershell.namespace: root.pluginId
+    WlrLayershell.layer: WlrLayer.Overlay
+    WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
-    PanelWindow {
-      id: panel
-      required property var modelData
-      screen: modelData
-      visible: root.opened
-      anchors { top: true; bottom: true; left: true; right: true }
-      color: "transparent"
-      exclusionMode: ExclusionMode.Ignore
-      WlrLayershell.namespace: root.pluginId
-      WlrLayershell.layer: WlrLayer.Overlay
-      WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
+    Keys.onEscapePressed: root.close()
+    Keys.onReturnPressed: if (event.modifiers & Qt.ControlModifier) root.cleanText()
 
-      Keys.onEscapePressed: root.close()
-      Keys.onReturnPressed: if (event.modifiers & Qt.ControlModifier && root.changes > 0) root.copyClean()
-
-      Rectangle {
-        anchors.fill: parent
-        color: Color.menu.scrim
-        MouseArea {
-          anchors.fill: parent
-          onClicked: root.close()
-        }
-      }
-
-      BorderSurface {
+    BorderSurface {
         id: card
         width: root.cardWidth
         height: Math.min(Style.space(510), parent.height - Style.gapsOut * 2)
@@ -187,9 +188,10 @@ Item {
 
           Row {
             width: parent.width
-            height: title.implicitHeight
+            height: titleColumn.implicitHeight
 
             Column {
+              id: titleColumn
               width: parent.width - closeButton.width - Style.spacing.md
               spacing: Style.spacing.xs
               Text {
@@ -205,6 +207,15 @@ Item {
                 text: root.words("Mira el cambio antes de reemplazar el portapapeles.", "Review the change before replacing your clipboard.")
                 color: Color.menu.text
                 opacity: 0.62
+                font.family: Style.font.menuFamily
+                font.pixelSize: Style.font.bodySmall
+                wrapMode: Text.Wrap
+              }
+              Text {
+                width: parent.width
+                text: root.words("Procesado localmente; no se envía ni se guarda en disco.", "Processed locally; never sent or saved to disk.")
+                color: Color.menu.text
+                opacity: 0.46
                 font.family: Style.font.menuFamily
                 font.pixelSize: Style.font.bodySmall
                 wrapMode: Text.Wrap
@@ -227,6 +238,17 @@ Item {
             opacity: root.changes > 0 ? 0.82 : 0.62
             font.family: Style.font.menuFamily
             font.pixelSize: Style.font.body
+            wrapMode: Text.Wrap
+          }
+
+          Text {
+            visible: root.edits.length > 0
+            width: parent.width
+            text: root.words("Se quitará: ", "Will remove: ") + root.edits.map(function(edit) { return "“" + edit.removed + "”" }).join(" · ")
+            color: Color.menu.text
+            opacity: 0.58
+            font.family: Style.font.menuFamily
+            font.pixelSize: Style.font.bodySmall
             wrapMode: Text.Wrap
           }
 
@@ -283,6 +305,7 @@ Item {
                         root.sourceText = text
                         root.hasResult = false
                         root.cleanedText = ""
+                        root.edits = []
                         root.changes = 0
                         root.status = root.words("Listo para una pasada segura.", "Ready for a safe cleanup pass.")
                       }
@@ -361,12 +384,13 @@ Item {
               text: root.words("usar portapapeles", "use clipboard")
               tooltipText: root.words("Limpia lo que acabas de copiar.", "Clean what you just copied.")
               bordered: true
+              active: !root.busy
               onClicked: root.cleanClipboard()
             }
             Button {
               id: cleanAction
               text: root.words("limpiar texto", "clean text")
-              active: root.sourceText !== ""
+              active: root.sourceText !== "" && !root.busy
               tooltipText: root.words("Limpia el texto de la izquierda.", "Clean the text on the left.")
               onClicked: root.cleanText()
             }
@@ -374,6 +398,7 @@ Item {
             Button {
               id: primaryAction
               visible: root.changes > 0
+              active: !root.busy
               selected: true
               text: root.words("reemplazar portapapeles", "replace clipboard")
               tooltipText: root.words("Copia la versión limpia.", "Copy the clean version.")
@@ -383,5 +408,4 @@ Item {
         }
       }
     }
-  }
 }
