@@ -50,6 +50,7 @@ def clean_payload(text: str) -> dict[str, object]:
             message = "No safe filler to remove."
     return {
         "ok": True,
+        "source": text,
         "text": result.text,
         "changes": result.changes,
         "message": message,

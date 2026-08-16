@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "io.github.brm-src.aismell-quick-clean",
   "name": "aismell quick clean",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Cris",
   "description": "Clean short English and Spanish clipboard text with aismell's local engine.",
   "kinds": ["panel"],

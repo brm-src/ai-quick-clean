@@ -15,6 +15,7 @@ def test_returns_cleaned_text_and_a_concise_change_summary():
     assert payload == {
         "ok": True,
         "text": "Hola, ya envié el archivo.",
+        "source": "Hola, cabe mencionar que ya envié el archivo.",
         "changes": 1,
         "message": "Quité 1 frase de relleno.",
         "language": "es",
@@ -27,6 +28,7 @@ def test_returns_an_english_summary_for_english_text():
     assert payload == {
         "ok": True,
         "text": "The file is ready. Thanks.",
+        "source": "That said, the file is ready. In conclusion, thanks.",
         "changes": 2,
         "message": "Removed 2 filler phrases.",
         "language": "en",

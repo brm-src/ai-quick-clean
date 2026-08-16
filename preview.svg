@@ -1,27 +1,33 @@
 <svg width="1600" height="1000" viewBox="0 0 1600 1000" fill="none" xmlns="http://www.w3.org/2000/svg">
   <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="1000" gradientUnits="userSpaceOnUse"><stop stop-color="#101116"/><stop offset="1" stop-color="#20131e"/></linearGradient>
-    <filter id="shadow" x="260" y="100" width="1080" height="800" filterUnits="userSpaceOnUse"><feDropShadow dx="0" dy="26" stdDeviation="28" flood-color="#000" flood-opacity=".6"/></filter>
+    <linearGradient id="bg" x1="0" y1="0" x2="1600" y2="1000" gradientUnits="userSpaceOnUse"><stop stop-color="#111218"/><stop offset="1" stop-color="#18131A"/></linearGradient>
+    <filter id="shadow" x="250" y="120" width="1100" height="800" filterUnits="userSpaceOnUse"><feDropShadow dx="0" dy="24" stdDeviation="30" flood-color="#000" flood-opacity=".62"/></filter>
   </defs>
   <rect width="1600" height="1000" fill="url(#bg)"/>
-  <circle cx="1320" cy="120" r="340" fill="#e0228f" fill-opacity=".12"/>
-  <circle cx="150" cy="900" r="270" fill="#e0228f" fill-opacity=".08"/>
-  <text x="100" y="116" fill="#F6F4F6" font-family="sans-serif" font-size="46" font-weight="700">aismell quick clean</text>
-  <text x="100" y="166" fill="#AAA6AA" font-family="sans-serif" font-size="25">clean the text you just copied, without changing what you meant</text>
+  <circle cx="1370" cy="110" r="310" fill="#E0228F" fill-opacity=".11"/>
+  <circle cx="120" cy="930" r="240" fill="#E0228F" fill-opacity=".07"/>
+  <text x="100" y="112" fill="#F7F5F7" font-family="sans-serif" font-size="46" font-weight="700">aismell quick clean</text>
+  <text x="100" y="164" fill="#B7B1B7" font-family="sans-serif" font-size="25">review a safe cleanup before replacing your clipboard</text>
   <g filter="url(#shadow)">
-    <rect x="350" y="230" width="900" height="590" rx="26" fill="#19171B" stroke="#E0228F" stroke-opacity=".8" stroke-width="2"/>
-    <text x="400" y="308" fill="#F8F6F8" font-family="sans-serif" font-size="31" font-weight="700">aismell quick clean</text>
-    <circle cx="1194" cy="294" r="19" fill="#302C31"/><text x="1186" y="303" fill="#F8F6F8" font-family="sans-serif" font-size="27">×</text>
-    <text x="400" y="360" fill="#C5C0C5" font-family="sans-serif" font-size="21">Removed 2 filler phrases.</text>
-    <rect x="400" y="397" width="800" height="1" fill="#F8F6F8" fill-opacity=".14"/>
-    <rect x="400" y="430" width="800" height="230" rx="17" fill="#F8F6F8" fill-opacity=".055" stroke="#F8F6F8" stroke-opacity=".12"/>
-    <text x="435" y="495" fill="#F8F6F8" font-family="sans-serif" font-size="27">I sent the file.</text>
-    <text x="435" y="542" fill="#F8F6F8" font-family="sans-serif" font-size="27">Thanks.</text>
-    <rect x="400" y="700" width="205" height="58" rx="14" fill="#F8F6F8" fill-opacity=".07"/>
-    <text x="426" y="737" fill="#F8F6F8" font-family="sans-serif" font-size="19">clean again</text>
-    <rect x="1013" y="700" width="187" height="58" rx="14" fill="#E0228F"/>
-    <text x="1042" y="737" fill="#170C15" font-family="sans-serif" font-size="19" font-weight="700">copy clean</text>
+    <rect x="300" y="220" width="1000" height="610" rx="16" fill="#1A181C" stroke="#4E4750" stroke-width="2"/>
+    <text x="350" y="292" fill="#F7F5F7" font-family="sans-serif" font-size="31" font-weight="700">aismell quick clean</text>
+    <text x="350" y="331" fill="#B7B1B7" font-family="sans-serif" font-size="19">Review the change before replacing your clipboard.</text>
+    <text x="1250" y="295" fill="#E5DFE5" font-family="sans-serif" font-size="30">×</text>
+    <rect x="350" y="365" width="900" height="1" fill="#4E4750"/>
+    <text x="350" y="408" fill="#DED8DE" font-family="sans-serif" font-size="21">Removed 2 filler phrases.</text>
+    <rect x="350" y="445" width="432" height="250" rx="11" fill="#242126" stroke="#4E4750"/>
+    <text x="377" y="483" fill="#A8A1A8" font-family="sans-serif" font-size="16" font-weight="700">ORIGINAL</text>
+    <text x="377" y="540" fill="#DFD9DF" font-family="sans-serif" font-size="22">That said, the file is ready.</text>
+    <text x="377" y="578" fill="#DFD9DF" font-family="sans-serif" font-size="22">In conclusion, thanks.</text>
+    <rect x="818" y="445" width="432" height="250" rx="11" fill="#35152C" stroke="#E0228F" stroke-width="2"/>
+    <text x="845" y="483" fill="#FFD1EB" font-family="sans-serif" font-size="16" font-weight="700">CLEAN VERSION</text>
+    <text x="845" y="540" fill="#FFF6FC" font-family="sans-serif" font-size="22">The file is ready.</text>
+    <text x="845" y="578" fill="#FFF6FC" font-family="sans-serif" font-size="22">Thanks.</text>
+    <rect x="350" y="735" width="228" height="54" rx="10" fill="#252227" stroke="#4E4750"/>
+    <text x="379" y="769" fill="#DED8DE" font-family="sans-serif" font-size="17">clean new clipboard</text>
+    <rect x="1007" y="735" width="243" height="54" rx="10" fill="#E0228F"/>
+    <text x="1035" y="769" fill="#1B0B16" font-family="sans-serif" font-size="17" font-weight="700">replace clipboard</text>
   </g>
-  <rect x="100" y="890" width="250" height="1" fill="#E0228F"/>
-  <text x="100" y="940" fill="#C5C0C5" font-family="sans-serif" font-size="22">super + shift + s · local text · no api</text>
+  <rect x="100" y="890" width="265" height="1" fill="#E0228F"/>
+  <text x="100" y="940" fill="#C5BFC5" font-family="sans-serif" font-size="22">super + shift + s · local text · English and Spanish</text>
 </svg>

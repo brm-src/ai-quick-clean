@@ -9,21 +9,24 @@ Item {
   id: root
 
   readonly property string pluginId: "io.github.brm-src.aismell-quick-clean"
-  readonly property string helperPath: Qt.resolvedUrl("quick_clean.py").toString().replace("file://", "")
+  readonly property bool isSpanish: uiLanguage === "es"
+  readonly property int cardWidth: Math.min(Style.space(760), panel.width - Style.gapsOut * 2)
   property bool opened: false
   property bool busy: false
-  property string cleanedText: ""
+  property bool hasResult: false
   property string uiLanguage: Qt.locale().name.toLowerCase().startsWith("es") ? "es" : "en"
-  property string status: uiLanguage === "es"
-    ? "Copia un mensaje, correo o párrafo y lo dejo más limpio."
-    : "Copy a message, email, or paragraph and I will clean it up."
+  property string sourceText: ""
+  property string cleanedText: ""
+  property string status: words("Copia algo y presiona limpiar.", "Copy something, then clean it.")
   property int changes: 0
   property var callback: null
 
-  function words(es, en) { return root.uiLanguage === "es" ? es : en }
+  function words(es, en) { return root.isSpanish ? es : en }
 
   function open() {
     root.opened = true
+    root.hasResult = false
+    root.sourceText = ""
     root.cleanedText = ""
     root.changes = 0
     root.cleanClipboard()
@@ -47,6 +50,8 @@ Item {
     helper.running = true
   }
 
+  readonly property string helperPath: Qt.resolvedUrl("quick_clean.py").toString().replace("file://", "")
+
   function handlePayload(raw) {
     root.busy = false
     var payload
@@ -61,18 +66,22 @@ Item {
   }
 
   function cleanClipboard() {
-    root.status = root.words("Leyendo y limpiando el portapapeles…", "Reading and cleaning the clipboard…")
+    root.status = root.words("Leyendo el portapapeles…", "Reading the clipboard…")
     root.runHelper("clean-clipboard", function(payload) {
       if (!payload.ok) {
+        root.hasResult = false
+        root.sourceText = ""
         root.cleanedText = ""
         root.changes = 0
         root.status = payload.error || root.words("No pude limpiar ese texto.", "I could not clean that text.")
         return
       }
       root.uiLanguage = payload.language === "es" ? "es" : "en"
+      root.sourceText = String(payload.source || "")
       root.cleanedText = String(payload.text || "")
       root.changes = Number(payload.changes || 0)
-      root.status = payload.message || root.words("Texto listo.", "Text ready.")
+      root.hasResult = true
+      root.status = payload.message || root.words("Resultado listo.", "Result ready.")
     })
   }
 
@@ -91,6 +100,7 @@ Item {
     function show(): string { root.open(); return "ok" }
     function hide(): string { root.close(); return "ok" }
     function toggle(): string { root.toggle(); return "ok" }
+    function state(): string { return root.opened ? "open" : "closed" }
   }
 
   Process {
@@ -102,7 +112,7 @@ Item {
     onExited: function(exitCode) {
       if (exitCode !== 0 && root.busy) {
         root.busy = false
-        root.status = "aismell no pudo acceder al portapapeles."
+        root.status = root.words("aismell no pudo acceder al portapapeles.", "aismell could not access the clipboard.")
       }
     }
   }
@@ -123,157 +133,187 @@ Item {
       WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
       Keys.onEscapePressed: root.close()
-      Keys.onReturnPressed: if (event.modifiers & Qt.ControlModifier) root.copyClean()
+      Keys.onReturnPressed: if (event.modifiers & Qt.ControlModifier && root.changes > 0) root.copyClean()
 
       Rectangle {
         anchors.fill: parent
-        color: Util.alpha(Color.background, 0.72)
+        color: Color.menu.scrim
         MouseArea {
           anchors.fill: parent
           onClicked: root.close()
         }
       }
 
-      Rectangle {
+      BorderSurface {
         id: card
-        width: Math.min(600, parent.width - 36)
-        height: Math.min(520, parent.height - 48)
+        width: root.cardWidth
+        height: Math.min(Style.space(510), parent.height - Style.gapsOut * 2)
         anchors.centerIn: parent
-        radius: 18
-        color: Util.alpha(Color.background, 0.98)
-        border.width: 1
-        border.color: Util.alpha(Color.accent, 0.72)
+        radius: Style.cornerRadius
+        color: Color.menu.background
+        borderSpec: Border.surfaceSpec("menu", "border", Color.menu.border, Math.max(1, Style.space(2)))
+        padding: Style.spacing.panelPadding
 
         MouseArea { anchors.fill: parent }
 
         Column {
           anchors.fill: parent
-          anchors.margins: 22
-          spacing: 14
+          anchors.topMargin: card.contentTopInset
+          anchors.rightMargin: card.contentRightInset
+          anchors.bottomMargin: card.contentBottomInset
+          anchors.leftMargin: card.contentLeftInset
+          spacing: Style.spacing.md
 
           Row {
             width: parent.width
-            Text {
-              width: parent.width - closeButton.width - 12
-              text: "aismell quick clean"
-              color: Color.foreground
-              font.family: Style.font.family
-              font.pixelSize: 21
-              font.bold: true
-            }
-            Rectangle {
-              id: closeButton
-              width: 30
-              height: 30
-              radius: 15
-              color: closeMouse.containsMouse ? Util.alpha(Color.foreground, 0.12) : "transparent"
+            height: title.implicitHeight
+
+            Column {
+              width: parent.width - closeButton.width - Style.spacing.md
+              spacing: Style.spacing.xs
               Text {
-                anchors.centerIn: parent
-                text: "×"
-                color: Color.foreground
-                font.pixelSize: 24
+                id: title
+                text: "aismell quick clean"
+                color: Color.menu.text
+                font.family: Style.font.menuFamily
+                font.pixelSize: Style.font.title
+                font.bold: true
               }
-              MouseArea {
-                id: closeMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.close()
+              Text {
+                width: parent.width
+                text: root.words("Mira el cambio antes de reemplazar el portapapeles.", "Review the change before replacing your clipboard.")
+                color: Color.menu.text
+                opacity: 0.62
+                font.family: Style.font.menuFamily
+                font.pixelSize: Style.font.bodySmall
+                wrapMode: Text.Wrap
               }
+            }
+            Button {
+              id: closeButton
+              anchors.verticalCenter: parent.verticalCenter
+              text: "×"
+              fontSize: Style.font.iconLarge
+              tooltipText: root.words("Cerrar", "Close")
+              onClicked: root.close()
             }
           }
 
           Text {
             width: parent.width
-            text: root.status
-            color: root.cleanedText ? Util.alpha(Color.foreground, 0.72) : Color.foreground
-            font.family: Style.font.family
-            font.pixelSize: 14
+            text: root.busy ? root.words("Limpiando…", "Cleaning…") : root.status
+            color: root.changes > 0 ? Color.menu.text : Color.menu.text
+            opacity: root.changes > 0 ? 0.82 : 0.62
+            font.family: Style.font.menuFamily
+            font.pixelSize: Style.font.body
             wrapMode: Text.Wrap
           }
 
-          Rectangle {
+          Row {
             width: parent.width
-            height: 1
-            color: Util.alpha(Color.foreground, 0.12)
-          }
+            height: parent.height - y - actions.height
+            spacing: Style.spacing.md
 
-          Rectangle {
-            width: parent.width
-            height: Math.max(160, parent.height - 185)
-            radius: 12
-            color: Util.alpha(Color.foreground, 0.055)
-            border.width: 1
-            border.color: Util.alpha(Color.foreground, 0.10)
+            BorderSurface {
+              width: (parent.width - parent.spacing) / 2
+              height: parent.height
+              radius: Style.cornerRadius
+              color: Style.controlFill(false, false, Color.menu.text, Color.accent)
+              borderSpec: Border.controlSpec("normal", Color.menu.text, Color.accent)
+              padding: Style.spacing.controlPaddingX
 
-            Flickable {
-              anchors.fill: parent
-              anchors.margins: 15
-              contentWidth: width
-              contentHeight: cleanText.implicitHeight
-              clip: true
+              Column {
+                anchors.fill: parent
+                anchors.topMargin: parent.contentTopInset
+                anchors.rightMargin: parent.contentRightInset
+                anchors.bottomMargin: parent.contentBottomInset
+                anchors.leftMargin: parent.contentLeftInset
+                spacing: Style.spacing.sm
+                Text {
+                  text: root.words("original", "original")
+                  color: Color.menu.text
+                  opacity: 0.56
+                  font.family: Style.font.menuFamily
+                  font.pixelSize: Style.font.bodySmall
+                  font.bold: true
+                }
+                TextEdit {
+                  width: parent.width
+                  height: parent.height - y
+                  text: root.hasResult ? root.sourceText : root.words("El texto del portapapeles aparecerá aquí.", "Your clipboard text will appear here.")
+                  color: root.hasResult ? Color.menu.text : Color.menu.text
+                  opacity: root.hasResult ? 0.76 : 0.48
+                  font.family: Style.font.menuFamily
+                  font.pixelSize: Style.font.body
+                  wrapMode: TextEdit.Wrap
+                  readOnly: true
+                  selectByMouse: true
+                  textFormat: TextEdit.PlainText
+                  clip: true
+                }
+              }
+            }
 
-              Text {
-                id: cleanText
-                width: parent.width
-                text: root.busy ? root.words("limpiando…", "cleaning…") : (root.cleanedText || root.words("Copia texto y vuelve a abrir esta ventana.", "Copy text and reopen this window."))
-                color: root.cleanedText ? Color.foreground : Util.alpha(Color.foreground, 0.55)
-                font.family: Style.font.family
-                font.pixelSize: 15
-                lineHeight: 1.3
-                wrapMode: Text.Wrap
-                textFormat: Text.PlainText
+            BorderSurface {
+              width: (parent.width - parent.spacing) / 2
+              height: parent.height
+              radius: Style.cornerRadius
+              color: root.changes > 0 ? Style.selectedFillFor(Color.menu.text, Color.accent) : Style.controlFill(false, false, Color.menu.text, Color.accent)
+              borderSpec: root.changes > 0 ? Border.controlSpec("selected", Color.menu.text, Color.accent) : Border.controlSpec("normal", Color.menu.text, Color.accent)
+              padding: Style.spacing.controlPaddingX
+
+              Column {
+                anchors.fill: parent
+                anchors.topMargin: parent.contentTopInset
+                anchors.rightMargin: parent.contentRightInset
+                anchors.bottomMargin: parent.contentBottomInset
+                anchors.leftMargin: parent.contentLeftInset
+                spacing: Style.spacing.sm
+                Text {
+                  text: root.words("versión limpia", "clean version")
+                  color: root.changes > 0 ? Style.selectedStateColor(Color.menu.text, Color.accent) : Color.menu.text
+                  opacity: root.changes > 0 ? 1 : 0.56
+                  font.family: Style.font.menuFamily
+                  font.pixelSize: Style.font.bodySmall
+                  font.bold: true
+                }
+                TextEdit {
+                  width: parent.width
+                  height: parent.height - y
+                  text: root.hasResult ? root.cleanedText : root.words("Nada que revisar todavía.", "Nothing to review yet.")
+                  color: root.changes > 0 ? Style.selectedStateColor(Color.menu.text, Color.accent) : Color.menu.text
+                  opacity: root.hasResult ? 1 : 0.48
+                  font.family: Style.font.menuFamily
+                  font.pixelSize: Style.font.body
+                  wrapMode: TextEdit.Wrap
+                  readOnly: true
+                  selectByMouse: true
+                  textFormat: TextEdit.PlainText
+                  clip: true
+                }
               }
             }
           }
 
           Row {
+            id: actions
             width: parent.width
-            spacing: 10
+            spacing: Style.spacing.sm
 
-            Rectangle {
-              width: 150
-              height: 40
-              radius: 10
-              color: reloadMouse.containsMouse ? Util.alpha(Color.foreground, 0.12) : Util.alpha(Color.foreground, 0.07)
-              Text {
-                anchors.centerIn: parent
-                text: root.words("volver a limpiar", "clean again")
-                color: Color.foreground
-                font.family: Style.font.family
-                font.pixelSize: 13
-              }
-              MouseArea {
-                id: reloadMouse
-                anchors.fill: parent
-                hoverEnabled: true
-                cursorShape: Qt.PointingHandCursor
-                onClicked: root.cleanClipboard()
-              }
+            Button {
+              text: root.words("limpiar otro texto", "clean new clipboard")
+              tooltipText: root.words("Lee de nuevo el portapapeles.", "Read the clipboard again.")
+              bordered: true
+              onClicked: root.cleanClipboard()
             }
-
-            Item { width: parent.width - 150 - copyButton.width - 10; height: 1 }
-
-            Rectangle {
-              id: copyButton
-              width: 136
-              height: 40
-              radius: 10
-              color: root.cleanedText && !root.busy ? Color.accent : Util.alpha(Color.foreground, 0.10)
-              Text {
-                anchors.centerIn: parent
-                text: root.words("copiar limpio", "copy clean")
-                color: root.cleanedText && !root.busy ? Color.background : Util.alpha(Color.foreground, 0.42)
-                font.family: Style.font.family
-                font.pixelSize: 13
-                font.bold: true
-              }
-              MouseArea {
-                anchors.fill: parent
-                enabled: root.cleanedText !== "" && !root.busy
-                cursorShape: enabled ? Qt.PointingHandCursor : Qt.ArrowCursor
-                onClicked: root.copyClean()
-              }
+            Item { width: parent.width - primaryAction.width - parent.spacing; height: 1 }
+            Button {
+              id: primaryAction
+              visible: root.changes > 0
+              selected: true
+              text: root.words("reemplazar portapapeles", "replace clipboard")
+              tooltipText: root.words("Copia la versión limpia.", "Copy the clean version.")
+              onClicked: root.copyClean()
             }
           }
         }

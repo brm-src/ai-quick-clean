@@ -4,7 +4,7 @@
 
 A small Omarchy shortcut for cleaning the text you just copied — without turning it into something else.
 
-`super + shift + s` opens an overlay, reads the clipboard, removes high-confidence filler, and leaves a cleaner version ready to copy.
+`super + shift + s` opens a compact review: your original clipboard text is on the left and the safe cleanup is on the right. Nothing replaces your clipboard until you choose **replace clipboard**.
 
 ## What it does
 
@@ -19,7 +19,7 @@ It is not a generative rewriter and it does not score your writing. If it cannot
 
 1. Copy text.
 2. Press `super + shift + s`.
-3. Review the result and select **copy clean**.
+3. Compare the original and cleaned version, then select **replace clipboard** only if you want it.
 
 `escape` closes the window. `ctrl + enter` copies the result.
 
@@ -54,7 +54,7 @@ The plugin reads text from the clipboard. The cleaned result is temporarily save
 
 ## Español
 
-Funciona con mensajes, correos y párrafos cortos en español e inglés. Quita relleno seguro sin reescribir el contenido ni enviar el texto a una API. Copia un texto y usa `super + shift + s`; después revisa el resultado y elige **copiar limpio**.
+Funciona con mensajes, correos y párrafos cortos en español e inglés. Quita relleno seguro sin reescribir el contenido ni enviar el texto a una API. Copia un texto y usa `super + shift + s`; compara ambas versiones y elige **reemplazar portapapeles** solo si te sirve.
 
 ## License
 
