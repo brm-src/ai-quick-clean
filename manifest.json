@@ -4,7 +4,7 @@
   "name": "ai quick clean",
   "version": "0.9.0",
   "author": "Cris",
-  "description": "Quita la palabrería de IA a mensajes y correos cortos, en español o inglés.",
+  "description": "Quita la palabrería de ia a mensajes y correos cortos, en español o inglés.",
   "kinds": ["panel", "bar-widget"],
   "keepLoaded": true,
   "entryPoints": {
@@ -13,7 +13,7 @@
   },
   "barWidget": {
     "displayName": "ai quick clean",
-    "description": "Quita la palabrería de IA a un texto corto.",
+    "description": "Quita la palabrería de ia a un texto corto.",
     "category": "Plugin",
     "defaultSection": "right",
     "allowMultiple": false

@@ -18,7 +18,7 @@ Open it from the bar button or with `super + shift + s`. The panel loads your cl
 - Removes ai-sounding filler such as “it is important to note”, “not just X, but Y”, generic conclusions, and inflated wording.
 - Keeps the original editable on the left and shows the cleaned version on the right.
 - Copies the cleaned version only when you press **copy**.
-- Does not try to evade AI detectors. It is a writing cleanup tool.
+- Does not try to evade ai detectors. It is a writing cleanup tool.
 
 ## Use
 
@@ -71,7 +71,7 @@ omarchy plugin validate .
 
 ## Español
 
-Panel de Omarchy para quitar la palabrería de IA a textos cortos. Si le pides a Claude, ChatGPT u otro asistente que redacte un correo, mensaje o párrafo por ti, ai quick clean limpia las marcas típicas de ese texto: frases de trámite, fórmulas repetidas, conclusiones genéricas y adjetivos de más. Conserva el mensaje, nombres, links, fechas, números, citas, código y listas.
+Panel de Omarchy para quitar la palabrería de ia a textos cortos. Si le pides a Claude, ChatGPT u otro asistente que redacte un correo, mensaje o párrafo por ti, ai quick clean limpia las marcas típicas de ese texto: frases de trámite, fórmulas repetidas, conclusiones genéricas y adjetivos de más. Conserva el mensaje, nombres, links, fechas, números, citas, código y listas.
 
 Ejemplos:
 

@@ -214,7 +214,7 @@ Item {
               width: parent.width - closeButton.width - Style.spacing.md
               spacing: Style.spacing.xs
               Text {
-                text: root.words("Quitar palabrería de IA", "Strip AI waffle")
+                text: root.words("Quitar palabrería de ia", "strip ai waffle")
                 color: Color.menu.text
                 font.family: Style.font.menuFamily
                 font.pixelSize: Style.font.title
@@ -223,8 +223,8 @@ Item {
               Text {
                 width: parent.width
                 text: root.words(
-                  "Le saca el relleno que suena a texto escrito por IA: frases de trámite, fórmulas repetidas y adjetivos de más. Conserva el mensaje, nombres, links y datos.",
-                  "Removes the padding that makes text sound AI-written: stock phrases, repeated formulas, and extra adjectives. Keeps your message, names, links, and numbers.")
+                  "Le saca el relleno que suena a texto escrito por ia: frases de trámite, fórmulas repetidas y adjetivos de más. Conserva el mensaje, nombres, links y datos.",
+                  "Removes the padding that makes text sound ai-written: stock phrases, repeated formulas, and extra adjectives. Keeps your message, names, links, and numbers.")
                 color: Color.menu.text
                 opacity: 0.66
                 font.family: Style.font.menuFamily

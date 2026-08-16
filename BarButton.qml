@@ -38,7 +38,7 @@ Item {
     onClicked: {
       if (root.bar) root.bar.run("omarchy-shell shell toggle " + root.moduleName + " '{}'")
     }
-    onEntered: if (root.bar) root.bar.showTooltip(root, root.isSpanish ? "Quitar palabrería de IA" : "Strip AI waffle")
+    onEntered: if (root.bar) root.bar.showTooltip(root, root.isSpanish ? "Quitar palabrería de ia" : "strip ai waffle")
     onExited: if (root.bar) root.bar.hideTooltip(root)
   }
 }
