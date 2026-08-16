@@ -2,9 +2,9 @@
   "schemaVersion": 1,
   "id": "io.github.brm-src.aismell-quick-clean",
   "name": "aismell quick clean",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "author": "Cris",
-  "description": "Review short English and Spanish text with aismell's local engine.",
+  "description": "Rewrite short English and Spanish text with aismell's online service.",
   "kinds": ["panel"],
   "keepLoaded": true,
   "entryPoints": {

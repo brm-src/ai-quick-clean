@@ -16,19 +16,18 @@ Item {
   property bool hasResult: false
   property string uiLanguage: Qt.locale().name.toLowerCase().startsWith("es") ? "es" : "en"
   property string sourceText: ""
-  property var findings: []
-  property string status: words("Copia algo y presiona revisar.", "Copy something, then review it.")
-  property int score: 0
-  property int changes: 0
+  property string rewrittenText: ""
+  property var changes: []
+  property string status: words("Copia algo y presiona reescribir.", "Copy something, then rewrite it.")
   property var callback: null
 
   function words(es, en) { return root.isSpanish ? es : en }
   function errorText(payload) {
     switch (payload.errorCode) {
-      case "empty": return root.words("Pega o escribe un texto antes de revisarlo.", "Paste or type text before reviewing it.")
+      case "empty": return root.words("Pega o escribe un texto antes de reescribirlo.", "Paste or type text before rewriting it.")
       case "too-long": return root.words("Este atajo admite hasta 3.000 caracteres.", "This shortcut accepts up to 3,000 characters.")
-      case "engine-missing": return root.words("No encontré el motor local de aismell.", "I could not find the local aismell engine.")
-      case "nothing-to-copy": return root.words("No hay una propuesta para copiar.", "There is no proposal to copy.")
+      case "rewrite-unavailable": return root.words("No pude conectar con aismell.me. Intenta otra vez.", "I could not reach aismell.me. Try again.")
+      case "nothing-to-copy": return root.words("No hay una versión reescrita para copiar.", "There is no rewritten version to copy.")
       case "clipboard-failed": return root.words("No pude acceder al portapapeles.", "I could not access the clipboard.")
       default: return root.words("No pude completar esa acción.", "I could not complete that action.")
     }
@@ -38,10 +37,9 @@ Item {
     root.opened = true
     root.hasResult = false
     root.sourceText = ""
-    root.findings = []
-    root.score = 0
-    root.changes = 0
-    root.status = root.words("Pega o escribe un texto corto para revisarlo.", "Paste or type a short text to review.")
+    root.rewrittenText = ""
+    root.changes = []
+    root.status = root.words("Pega o escribe un texto corto para reescribirlo.", "Paste or type a short text to rewrite.")
   }
 
   function close() {
@@ -79,46 +77,45 @@ Item {
     root.callback = null
   }
 
-  function reviewClipboard() {
-    root.status = root.words("aismell está revisando el portapapeles…", "aismell is reviewing the clipboard…")
-    root.runHelper("analyze-clipboard", "", function(payload) {
-      root.applyAnalysisPayload(payload)
+  function rewriteClipboard() {
+    root.status = root.words("aismell está reescribiendo el portapapeles…", "aismell is rewriting the clipboard…")
+    root.runHelper("rewrite-clipboard", "", function(payload) {
+      root.applyRewritePayload(payload)
     })
   }
 
-  function reviewText() {
+  function rewriteText() {
     if (!root.sourceText.trim()) {
-      root.status = root.words("Pega o escribe un texto antes de revisarlo.", "Paste or type text before reviewing it.")
+      root.status = root.words("Pega o escribe un texto antes de reescribirlo.", "Paste or type text before rewriting it.")
       return
     }
-    root.status = root.words("aismell está buscando señales reales…", "aismell is looking for real signals…")
-    root.runHelper("analyze-stdin", root.sourceText, function(payload) {
-      root.applyAnalysisPayload(payload)
+    root.status = root.words("aismell está preparando una versión más directa…", "aismell is preparing a more direct version…")
+    root.runHelper("rewrite-stdin", root.sourceText, function(payload) {
+      root.applyRewritePayload(payload)
     })
   }
 
-  function applyAnalysisPayload(payload) {
+  function applyRewritePayload(payload) {
     if (!payload.ok) {
       root.hasResult = false
-      root.findings = []
-      root.score = 0
-      root.changes = 0
+      root.rewrittenText = ""
+      root.changes = []
       root.status = root.errorText(payload)
       return
     }
-    root.uiLanguage = payload.language === "es" ? "es" : "en"
     root.sourceText = String(payload.source || "")
-    root.findings = payload.findings || []
-    root.score = Number(payload.score || 0)
-    root.changes = root.findings.length
+    root.rewrittenText = String(payload.text || "")
+    root.changes = payload.changes || []
     root.hasResult = true
-    root.status = payload.message || root.words("Revisión lista.", "Review ready.")
+    root.status = root.changes.length > 0
+      ? root.words("Versión directa lista. Revísala antes de copiar.", "Direct version ready. Review it before copying.")
+      : root.words("aismell no vio relleno claro; dejó tu texto igual.", "aismell found no clear filler and left your text unchanged.")
   }
 
-  function copyEditedText() {
-    root.runHelper("copy-stdin", root.sourceText, function(payload) {
+  function copyRewrittenText() {
+    root.runHelper("copy-stdin", root.rewrittenText, function(payload) {
       root.status = payload.ok
-        ? root.words("Texto editado copiado.", "Edited text copied.")
+        ? root.words("Versión reescrita copiada.", "Rewritten version copied.")
         : root.errorText(payload)
     })
   }
@@ -165,7 +162,7 @@ Item {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
     Keys.onEscapePressed: root.close()
-    Keys.onReturnPressed: if (event.modifiers & Qt.ControlModifier) root.reviewText()
+    Keys.onReturnPressed: if (event.modifiers & Qt.ControlModifier) root.rewriteText()
 
     BorderSurface {
         id: card
@@ -205,7 +202,7 @@ Item {
               }
               Text {
                 width: parent.width
-                text: root.words("aismell marca lo que merece atención; tú decides qué reescribir.", "aismell marks what deserves attention; you decide what to rewrite.")
+                text: root.words("aismell propone una versión más directa; tú decides si usarla.", "aismell proposes a more direct version; you decide whether to use it.")
                 color: Color.menu.text
                 opacity: 0.62
                 font.family: Style.font.menuFamily
@@ -214,7 +211,7 @@ Item {
               }
               Text {
                 width: parent.width
-                text: root.words("Procesado localmente; no se envía ni se guarda en disco.", "Processed locally; never sent or saved to disk.")
+                text: root.words("Envía el texto a aismell.me para reescribirlo. No se guarda.", "Sends text to aismell.me to rewrite it. It is not stored.")
                 color: Color.menu.text
                 opacity: 0.46
                 font.family: Style.font.menuFamily
@@ -234,9 +231,9 @@ Item {
 
           Text {
             width: parent.width
-            text: root.busy ? root.words("Revisando con aismell…", "Reviewing with aismell…") : root.status
-            color: root.changes > 0 ? Color.menu.text : Color.menu.text
-            opacity: root.changes > 0 ? 0.82 : 0.62
+            text: root.busy ? root.words("Reescribiendo con aismell…", "Rewriting with aismell…") : root.status
+            color: root.changes.length > 0 ? Color.menu.text : Color.menu.text
+            opacity: root.changes.length > 0 ? 0.82 : 0.62
             font.family: Style.font.menuFamily
             font.pixelSize: Style.font.body
             wrapMode: Text.Wrap
@@ -245,7 +242,9 @@ Item {
           Text {
             visible: root.hasResult
             width: parent.width
-            text: root.words("Índice de señales: ", "Signal index: ") + root.score + "/100 · " + root.changes + root.words(" hallazgo(s) concreto(s).", " concrete finding(s).")
+            text: root.changes.length > 0
+              ? root.words("Cambios propuestos: ", "Proposed changes: ") + root.changes.length
+              : root.words("Sin relleno claro que cambiar.", "No clear filler to change.")
             color: Color.menu.text
             opacity: 0.58
             font.family: Style.font.menuFamily
@@ -305,10 +304,9 @@ Item {
                       if (activeFocus && text !== root.sourceText) {
                         root.sourceText = text
                         root.hasResult = false
-                        root.findings = []
-                        root.score = 0
-                        root.changes = 0
-                        root.status = root.words("Listo para revisar con aismell.", "Ready for an aismell review.")
+                        root.rewrittenText = ""
+                        root.changes = []
+                        root.status = root.words("Listo para reescribir con aismell.", "Ready to rewrite with aismell.")
                       }
                     }
                     Text {
@@ -329,8 +327,8 @@ Item {
               width: (parent.width - parent.spacing) / 2
               height: parent.height
               radius: Style.cornerRadius
-              color: root.changes > 0 ? Style.selectedFillFor(Color.menu.text, Color.accent) : Style.controlFill(false, false, Color.menu.text, Color.accent)
-              borderSpec: root.changes > 0 ? Border.controlSpec("selected", Color.menu.text, Color.accent) : Border.controlSpec("normal", Color.menu.text, Color.accent)
+              color: root.changes.length > 0 ? Style.selectedFillFor(Color.menu.text, Color.accent) : Style.controlFill(false, false, Color.menu.text, Color.accent)
+              borderSpec: root.changes.length > 0 ? Border.controlSpec("selected", Color.menu.text, Color.accent) : Border.controlSpec("normal", Color.menu.text, Color.accent)
               padding: Style.spacing.controlPaddingX
 
               Column {
@@ -341,9 +339,9 @@ Item {
                 anchors.leftMargin: parent.contentLeftInset
                 spacing: Style.spacing.sm
                 Text {
-                  text: root.words("señales de aismell", "aismell signals")
-                  color: root.changes > 0 ? Style.selectedStateColor(Color.menu.text, Color.accent) : Color.menu.text
-                  opacity: root.changes > 0 ? 1 : 0.56
+                  text: root.words("versión propuesta", "proposed version")
+                  color: root.changes.length > 0 ? Style.selectedStateColor(Color.menu.text, Color.accent) : Color.menu.text
+                  opacity: root.changes.length > 0 ? 1 : 0.56
                   font.family: Style.font.menuFamily
                   font.pixelSize: Style.font.bodySmall
                   font.bold: true
@@ -351,60 +349,27 @@ Item {
                 Item {
                   width: parent.width
                   height: parent.height - y
-                  ListView {
+                  Flickable {
                     anchors.fill: parent
-                    visible: root.findings.length > 0
+                    visible: root.hasResult
+                    contentWidth: width
+                    contentHeight: Math.max(height, rewrittenTextItem.implicitHeight)
                     clip: true
-                    spacing: Style.spacing.sm
-                    model: root.findings
-                    delegate: Column {
-                      required property var modelData
+                    Text {
+                      id: rewrittenTextItem
                       width: parent.width
-                      spacing: Style.spacing.xs
-                      Text {
-                        width: parent.width
-                        text: "“" + modelData.matched + "”"
-                        color: Style.selectedStateColor(Color.menu.text, Color.accent)
-                        font.family: Style.font.menuFamily
-                        font.pixelSize: Style.font.body
-                        font.bold: true
-                        wrapMode: Text.Wrap
-                      }
-                      Text {
-                        width: parent.width
-                        text: modelData.message
-                        color: Color.menu.text
-                        opacity: 0.76
-                        font.family: Style.font.menuFamily
-                        font.pixelSize: Style.font.bodySmall
-                        wrapMode: Text.Wrap
-                      }
-                      Text {
-                        width: parent.width
-                        text: "→ " + modelData.suggestion
-                        color: Color.menu.text
-                        opacity: 0.58
-                        font.family: Style.font.menuFamily
-                        font.pixelSize: Style.font.bodySmall
-                        wrapMode: Text.Wrap
-                      }
-                      Rectangle { width: parent.width; height: 1; color: Color.menu.border; opacity: 0.5 }
+                      text: root.rewrittenText
+                      color: Color.menu.text
+                      opacity: 0.9
+                      font.family: Style.font.menuFamily
+                      font.pixelSize: Style.font.body
+                      wrapMode: Text.Wrap
                     }
                   }
                   Text {
                     anchors.fill: parent
-                    visible: root.hasResult && root.findings.length === 0
-                    text: root.words("Nada fuerte que corregir. Tu texto queda como está.", "Nothing strong to correct. Your text stays as it is.")
-                    color: Color.menu.text
-                    opacity: 0.58
-                    font.family: Style.font.menuFamily
-                    font.pixelSize: Style.font.body
-                    wrapMode: Text.Wrap
-                  }
-                  Text {
-                    anchors.fill: parent
                     visible: !root.hasResult
-                    text: root.words("Revisa el texto para ver señales reales de aismell y sugerencias concretas.", "Review the text to see real aismell signals and concrete suggestions.")
+                    text: root.words("Pide una reescritura para comparar una versión más directa.", "Request a rewrite to compare a more direct version.")
                     color: Color.menu.text
                     opacity: 0.48
                     font.family: Style.font.menuFamily
@@ -423,28 +388,28 @@ Item {
 
             Button {
               id: clipboardAction
-              text: root.words("revisar portapapeles", "review clipboard")
-              tooltipText: root.words("Busca señales reales de aismell en lo que acabas de copiar.", "Find real aismell signals in what you just copied.")
+              text: root.words("reescribir portapapeles", "rewrite clipboard")
+              tooltipText: root.words("Envía lo que acabas de copiar a aismell.me para una versión más directa.", "Send what you copied to aismell.me for a more direct version.")
               bordered: true
               active: !root.busy
-              onClicked: root.reviewClipboard()
+              onClicked: root.rewriteClipboard()
             }
             Button {
               id: cleanAction
-              text: root.words("revisar texto", "review text")
+              text: root.words("reescribir texto", "rewrite text")
               active: root.sourceText !== "" && !root.busy
-              tooltipText: root.words("Busca señales de aismell en el texto de la izquierda.", "Find aismell signals in the text on the left.")
-              onClicked: root.reviewText()
+              tooltipText: root.words("Envía el texto de la izquierda a aismell.me para una versión más directa.", "Send the text on the left to aismell.me for a more direct version.")
+              onClicked: root.rewriteText()
             }
             Item { width: parent.width - clipboardAction.width - cleanAction.width - primaryAction.width - parent.spacing * 2; height: 1 }
             Button {
               id: primaryAction
-              visible: root.sourceText !== ""
+              visible: root.hasResult && root.rewrittenText !== ""
               active: !root.busy
               selected: true
-              text: root.words("copiar texto editado", "copy edited text")
-              tooltipText: root.words("Copia el texto de la izquierda después de tu edición.", "Copy the text on the left after your edit.")
-              onClicked: root.copyEditedText()
+              text: root.words("copiar versión", "copy version")
+              tooltipText: root.words("Copia la versión propuesta al portapapeles.", "Copy the proposed version to the clipboard.")
+              onClicked: root.copyRewrittenText()
             }
           }
         }
