@@ -16,30 +16,39 @@ Item {
   property bool hasResult: false
   property string uiLanguage: Qt.locale().name.toLowerCase().startsWith("es") ? "es" : "en"
   property string sourceText: ""
-  property string rewrittenText: ""
+  property string cleanedText: ""
   property var changes: []
-  property string status: words("Copia algo y presiona reescribir.", "Copy something, then rewrite it.")
+  property string status: ""
   property var callback: null
 
   function words(es, en) { return root.isSpanish ? es : en }
+
   function errorText(payload) {
     switch (payload.errorCode) {
-      case "empty": return root.words("Pega o escribe un texto antes de reescribirlo.", "Paste or type text before rewriting it.")
-      case "too-long": return root.words("Este atajo admite hasta 3.000 caracteres.", "This shortcut accepts up to 3,000 characters.")
-      case "rewrite-unavailable": return root.words("No pude conectar con el servicio de aismell. Intenta otra vez.", "I could not reach the aismell service. Try again.")
-      case "nothing-to-copy": return root.words("No hay una versión reescrita para copiar.", "There is no rewritten version to copy.")
-      case "clipboard-failed": return root.words("No pude acceder al portapapeles.", "I could not access the clipboard.")
-      default: return root.words("No pude completar esa acción.", "I could not complete that action.")
+      case "empty": return root.words("Pega o escribe un texto primero.", "Paste or type some text first.")
+      case "too-long": return root.words("Son demasiadas palabras. Prueba con menos de 3.000 caracteres.", "That is too long. Try under 3,000 characters.")
+      case "rewrite-unavailable": return root.words("No hay conexión con el servicio. Intenta de nuevo.", "No connection to the service. Try again.")
+      case "nothing-to-copy": return root.words("Todavía no hay nada que copiar.", "There is nothing to copy yet.")
+      case "clipboard-failed": return root.words("No pude usar el portapapeles.", "I could not use the clipboard.")
+      default: return root.words("No pude hacerlo.", "I could not do that.")
     }
   }
+
+  readonly property string idleHint: words(
+    "Pega tu texto y presiona limpiar.",
+    "Paste your text and press clean.")
 
   function open() {
     root.opened = true
     root.hasResult = false
-    root.sourceText = ""
-    root.rewrittenText = ""
+    root.cleanedText = ""
     root.changes = []
-    root.status = root.words("Pega o escribe un texto corto para reescribirlo.", "Paste or type a short text to rewrite.")
+    root.status = root.idleHint
+    // Whatever the person just copied is almost always what they want cleaned,
+    // so it arrives already loaded instead of behind a second button.
+    root.runHelper("read-clipboard", "", function(payload) {
+      if (payload.ok && String(payload.source || "").trim() !== "") root.sourceText = String(payload.source)
+    })
   }
 
   function close() {
@@ -70,52 +79,41 @@ Item {
     try {
       payload = JSON.parse(String(raw || "{}"))
     } catch (error) {
-      root.status = root.words("aismell no pudo leer la respuesta.", "aismell could not read the response.")
+      root.status = root.words("No pude leer la respuesta.", "I could not read the response.")
       return
     }
     if (root.callback) root.callback(payload)
     root.callback = null
   }
 
-  function rewriteClipboard() {
-    root.status = root.words("aismell está reescribiendo el portapapeles…", "aismell is rewriting the clipboard…")
-    root.runHelper("rewrite-clipboard", "", function(payload) {
-      root.applyRewritePayload(payload)
-    })
-  }
-
-  function rewriteText() {
+  function cleanText() {
     if (!root.sourceText.trim()) {
-      root.status = root.words("Pega o escribe un texto antes de reescribirlo.", "Paste or type text before rewriting it.")
+      root.status = root.words("Pega o escribe un texto primero.", "Paste or type some text first.")
       return
     }
-    root.status = root.words("aismell está preparando una versión más directa…", "aismell is preparing a more direct version…")
+    root.status = root.words("Limpiando…", "Cleaning…")
     root.runHelper("rewrite-stdin", root.sourceText, function(payload) {
-      root.applyRewritePayload(payload)
+      if (!payload.ok) {
+        root.hasResult = false
+        root.cleanedText = ""
+        root.changes = []
+        root.status = root.errorText(payload)
+        return
+      }
+      root.sourceText = String(payload.source || "")
+      root.cleanedText = String(payload.text || "")
+      root.changes = payload.changes || []
+      root.hasResult = true
+      root.status = root.changes.length > 0
+        ? root.words("Listo. Compara y copia si te gusta.", "Done. Compare it and copy if you like it.")
+        : root.words("Tu texto ya estaba limpio.", "Your text was already clean.")
     })
   }
 
-  function applyRewritePayload(payload) {
-    if (!payload.ok) {
-      root.hasResult = false
-      root.rewrittenText = ""
-      root.changes = []
-      root.status = root.errorText(payload)
-      return
-    }
-    root.sourceText = String(payload.source || "")
-    root.rewrittenText = String(payload.text || "")
-    root.changes = payload.changes || []
-    root.hasResult = true
-    root.status = root.changes.length > 0
-      ? root.words("Versión directa lista. Revísala antes de copiar.", "Direct version ready. Review it before copying.")
-      : root.words("aismell no vio relleno claro; dejó tu texto igual.", "aismell found no clear filler and left your text unchanged.")
-  }
-
-  function copyRewrittenText() {
-    root.runHelper("copy-stdin", root.rewrittenText, function(payload) {
+  function copyCleanText() {
+    root.runHelper("copy-stdin", root.cleanedText, function(payload) {
       root.status = payload.ok
-        ? root.words("Versión reescrita copiada.", "Rewritten version copied.")
+        ? root.words("Copiado. Ya puedes pegarlo.", "Copied. You can paste it now.")
         : root.errorText(payload)
     })
   }
@@ -145,7 +143,7 @@ Item {
     onExited: function(exitCode) {
       if (exitCode !== 0 && root.busy) {
         root.busy = false
-        root.status = root.words("aismell no pudo acceder al portapapeles.", "aismell could not access the clipboard.")
+        root.status = root.words("No pude completar eso.", "I could not complete that.")
       }
     }
   }
@@ -161,19 +159,42 @@ Item {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
-    Keys.onEscapePressed: root.close()
-    Keys.onReturnPressed: if (event.modifiers & Qt.ControlModifier) root.rewriteText()
+    // A layer surface is not a window, so the compositor's close-window bind
+    // never reaches it. Escape and clicking the backdrop are the ways out, and
+    // both live here so neither depends on which child holds focus.
+    Item {
+      id: keyCatcher
+      anchors.fill: parent
+      focus: true
+      Keys.onEscapePressed: root.close()
+      Keys.onPressed: function(event) {
+        if (event.key === Qt.Key_W && (event.modifiers & Qt.MetaModifier)) {
+          root.close()
+          event.accepted = true
+        }
+      }
+    }
+
+    Rectangle {
+      anchors.fill: parent
+      color: Color.menu.scrim
+      MouseArea {
+        anchors.fill: parent
+        onClicked: root.close()
+      }
+    }
 
     BorderSurface {
         id: card
         width: root.cardWidth
-        height: Math.min(Style.space(510), parent.height - Style.gapsOut * 2)
+        height: Math.min(Style.space(520), parent.height - Style.gapsOut * 2)
         anchors.centerIn: parent
         radius: Style.cornerRadius
         color: Color.menu.background
         borderSpec: Border.surfaceSpec("menu", "border", Color.menu.border, Math.max(1, Style.space(2)))
         padding: Style.spacing.panelPadding
 
+        // Swallow clicks on the card so the backdrop's close does not fire.
         MouseArea { anchors.fill: parent }
 
         Column {
@@ -193,8 +214,7 @@ Item {
               width: parent.width - closeButton.width - Style.spacing.md
               spacing: Style.spacing.xs
               Text {
-                id: title
-                text: "aismell quick clean"
+                text: root.words("Quitar palabrería de IA", "Strip AI waffle")
                 color: Color.menu.text
                 font.family: Style.font.menuFamily
                 font.pixelSize: Style.font.title
@@ -202,18 +222,11 @@ Item {
               }
               Text {
                 width: parent.width
-                text: root.words("aismell propone una versión más directa; tú decides si usarla.", "aismell proposes a more direct version; you decide whether to use it.")
+                text: root.words(
+                  "Le saca el relleno que suena a texto escrito por IA: frases de trámite, fórmulas repetidas y adjetivos de más. Conserva el mensaje, nombres, links y datos.",
+                  "Removes the padding that makes text sound AI-written: stock phrases, repeated formulas, and extra adjectives. Keeps your message, names, links, and numbers.")
                 color: Color.menu.text
-                opacity: 0.62
-                font.family: Style.font.menuFamily
-                font.pixelSize: Style.font.bodySmall
-                wrapMode: Text.Wrap
-              }
-              Text {
-                width: parent.width
-                text: root.words("Envía el texto al servicio de aismell (Cloudflare). No se guarda.", "Sends text to aismell's Cloudflare service. It is not stored.")
-                color: Color.menu.text
-                opacity: 0.46
+                opacity: 0.66
                 font.family: Style.font.menuFamily
                 font.pixelSize: Style.font.bodySmall
                 wrapMode: Text.Wrap
@@ -224,37 +237,24 @@ Item {
               anchors.verticalCenter: parent.verticalCenter
               text: "×"
               fontSize: Style.font.iconLarge
-              tooltipText: root.words("Cerrar", "Close")
+              tooltipText: root.words("Cerrar (Esc)", "Close (Esc)")
               onClicked: root.close()
             }
           }
 
           Text {
             width: parent.width
-            text: root.busy ? root.words("Reescribiendo con aismell…", "Rewriting with aismell…") : root.status
-            color: root.changes.length > 0 ? Color.menu.text : Color.menu.text
-            opacity: root.changes.length > 0 ? 0.82 : 0.62
+            text: root.busy ? root.words("Limpiando…", "Cleaning…") : root.status
+            color: Color.menu.text
+            opacity: root.hasResult ? 0.82 : 0.62
             font.family: Style.font.menuFamily
             font.pixelSize: Style.font.body
             wrapMode: Text.Wrap
           }
 
-          Text {
-            visible: root.hasResult
-            width: parent.width
-            text: root.changes.length > 0
-              ? root.words("Cambios propuestos: ", "Proposed changes: ") + root.changes.length
-              : root.words("Sin relleno claro que cambiar.", "No clear filler to change.")
-            color: Color.menu.text
-            opacity: 0.58
-            font.family: Style.font.menuFamily
-            font.pixelSize: Style.font.bodySmall
-            wrapMode: Text.Wrap
-          }
-
           Row {
             width: parent.width
-            height: parent.height - y - actions.height
+            height: parent.height - y - actions.height - Style.spacing.md
             spacing: Style.spacing.md
 
             BorderSurface {
@@ -300,19 +300,26 @@ Item {
                     wrapMode: TextEdit.Wrap
                     selectByMouse: true
                     textFormat: TextEdit.PlainText
+                    Keys.onEscapePressed: root.close()
+                    Keys.onPressed: function(event) {
+                      if (event.key === Qt.Key_W && (event.modifiers & Qt.MetaModifier)) {
+                        root.close()
+                        event.accepted = true
+                      }
+                    }
                     onTextChanged: {
                       if (activeFocus && text !== root.sourceText) {
                         root.sourceText = text
                         root.hasResult = false
-                        root.rewrittenText = ""
+                        root.cleanedText = ""
                         root.changes = []
-                        root.status = root.words("Listo para reescribir con aismell.", "Ready to rewrite with aismell.")
+                        root.status = root.idleHint
                       }
                     }
                     Text {
                       visible: sourceEditor.text === "" && !sourceEditor.activeFocus
                       anchors.fill: parent
-                      text: root.words("Pega o escribe un mensaje, correo o párrafo corto.", "Paste or type a short message, email, or paragraph.")
+                      text: root.words("Pega un mensaje, correo o párrafo corto.", "Paste a short message, email, or paragraph.")
                       color: Color.menu.text
                       opacity: 0.45
                       font: sourceEditor.font
@@ -327,8 +334,8 @@ Item {
               width: (parent.width - parent.spacing) / 2
               height: parent.height
               radius: Style.cornerRadius
-              color: root.changes.length > 0 ? Style.selectedFillFor(Color.menu.text, Color.accent) : Style.controlFill(false, false, Color.menu.text, Color.accent)
-              borderSpec: root.changes.length > 0 ? Border.controlSpec("selected", Color.menu.text, Color.accent) : Border.controlSpec("normal", Color.menu.text, Color.accent)
+              color: root.hasResult ? Style.selectedFillFor(Color.menu.text, Color.accent) : Style.controlFill(false, false, Color.menu.text, Color.accent)
+              borderSpec: root.hasResult ? Border.controlSpec("selected", Color.menu.text, Color.accent) : Border.controlSpec("normal", Color.menu.text, Color.accent)
               padding: Style.spacing.controlPaddingX
 
               Column {
@@ -339,9 +346,9 @@ Item {
                 anchors.leftMargin: parent.contentLeftInset
                 spacing: Style.spacing.sm
                 Text {
-                  text: root.words("versión propuesta", "proposed version")
-                  color: root.changes.length > 0 ? Style.selectedStateColor(Color.menu.text, Color.accent) : Color.menu.text
-                  opacity: root.changes.length > 0 ? 1 : 0.56
+                  text: root.words("sin palabrería", "cleaned up")
+                  color: root.hasResult ? Style.selectedStateColor(Color.menu.text, Color.accent) : Color.menu.text
+                  opacity: root.hasResult ? 1 : 0.56
                   font.family: Style.font.menuFamily
                   font.pixelSize: Style.font.bodySmall
                   font.bold: true
@@ -353,12 +360,12 @@ Item {
                     anchors.fill: parent
                     visible: root.hasResult
                     contentWidth: width
-                    contentHeight: Math.max(height, rewrittenTextItem.implicitHeight)
+                    contentHeight: Math.max(height, cleanedTextItem.implicitHeight)
                     clip: true
                     Text {
-                      id: rewrittenTextItem
+                      id: cleanedTextItem
                       width: parent.width
-                      text: root.rewrittenText
+                      text: root.cleanedText
                       color: Color.menu.text
                       opacity: 0.9
                       font.family: Style.font.menuFamily
@@ -369,7 +376,7 @@ Item {
                   Text {
                     anchors.fill: parent
                     visible: !root.hasResult
-                    text: root.words("Pide una reescritura para comparar una versión más directa.", "Request a rewrite to compare a more direct version.")
+                    text: root.words("Aquí aparecerá tu texto sin el relleno.", "Your text without the padding will appear here.")
                     color: Color.menu.text
                     opacity: 0.48
                     font.family: Style.font.menuFamily
@@ -387,29 +394,34 @@ Item {
             spacing: Style.spacing.sm
 
             Button {
-              id: clipboardAction
-              text: root.words("reescribir portapapeles", "rewrite clipboard")
-              tooltipText: root.words("Envía lo que acabas de copiar al servicio de aismell para una versión más directa.", "Send what you copied to aismell's service for a more direct version.")
-              bordered: true
-              active: !root.busy
-              onClicked: root.rewriteClipboard()
-            }
-            Button {
               id: cleanAction
-              text: root.words("reescribir texto", "rewrite text")
+              text: root.words("limpiar", "clean")
+              selected: !root.hasResult
               active: root.sourceText !== "" && !root.busy
-              tooltipText: root.words("Envía el texto de la izquierda al servicio de aismell para una versión más directa.", "Send the text on the left to aismell's service for a more direct version.")
-              onClicked: root.rewriteText()
+              tooltipText: root.words("Quita el relleno del texto de la izquierda.", "Strip the padding from the text on the left.")
+              onClicked: root.cleanText()
             }
-            Item { width: parent.width - clipboardAction.width - cleanAction.width - primaryAction.width - parent.spacing * 2; height: 1 }
             Button {
-              id: primaryAction
-              visible: root.hasResult && root.rewrittenText !== ""
-              active: !root.busy
+              id: copyAction
+              visible: root.hasResult && root.cleanedText !== ""
               selected: true
-              text: root.words("copiar versión", "copy version")
-              tooltipText: root.words("Copia la versión propuesta al portapapeles.", "Copy the proposed version to the clipboard.")
-              onClicked: root.copyRewrittenText()
+              active: !root.busy
+              text: root.words("copiar", "copy")
+              tooltipText: root.words("Copia la versión limpia al portapapeles.", "Copy the cleaned version to the clipboard.")
+              onClicked: root.copyCleanText()
+            }
+            Item {
+              width: Math.max(0, parent.width - cleanAction.width - (copyAction.visible ? copyAction.width + parent.spacing : 0) - privacyNote.width - parent.spacing)
+              height: 1
+            }
+            Text {
+              id: privacyNote
+              anchors.verticalCenter: parent.verticalCenter
+              text: root.words("Se procesa en internet. No se guarda.", "Processed online. Not stored.")
+              color: Color.menu.text
+              opacity: 0.42
+              font.family: Style.font.menuFamily
+              font.pixelSize: Style.font.bodySmall
             }
           }
         }

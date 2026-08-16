@@ -52,3 +52,21 @@ def test_rewrites_edited_text_received_on_standard_input(monkeypatch, capsys):
 
 def test_keeps_text_in_memory_without_a_state_file():
     assert not hasattr(quick_clean, "STATE_FILE")
+
+
+def test_hands_the_panel_the_clipboard_without_cleaning_it_yet(monkeypatch, capsys):
+    monkeypatch.setattr(quick_clean, "_read_clipboard", lambda: "It is important to note that this is a draft.")
+    monkeypatch.setattr(
+        quick_clean,
+        "_post_rewrite",
+        lambda payload: (_ for _ in ()).throw(AssertionError("opening the panel must not call the service")),
+    )
+
+    assert main(["read-clipboard"]) == 0
+
+    payload = json.loads(capsys.readouterr().out)
+    assert payload == {
+        "ok": True,
+        "source": "It is important to note that this is a draft.",
+        "truncated": False,
+    }

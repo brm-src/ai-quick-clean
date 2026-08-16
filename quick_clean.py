@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Portable bridge from the Omarchy panel to aismell's public rewrite service."""
+"""Bridge from the Omarchy panel to aismell's hosted cleanup service."""
 
 from __future__ import annotations
 
@@ -80,6 +80,12 @@ def _read_stdin_text() -> str:
         chunks.append(character)
 
 
+def clipboard_payload() -> dict[str, object]:
+    """Hand the panel the clipboard as-is, so opening it needs no extra click."""
+    text = _read_clipboard()
+    return {"ok": True, "source": text[:MAX_CHARS], "truncated": len(text) > MAX_CHARS}
+
+
 def copy_text(text: str) -> dict[str, object]:
     if not text:
         return {"ok": False, "errorCode": "nothing-to-copy"}
@@ -97,7 +103,9 @@ def copy_text(text: str) -> dict[str, object]:
 
 def main(argv: list[str] | None = None) -> int:
     command = (argv or sys.argv[1:])[:1]
-    if command == ["rewrite-clipboard"]:
+    if command == ["read-clipboard"]:
+        payload = clipboard_payload()
+    elif command == ["rewrite-clipboard"]:
         payload = rewrite_payload(_read_clipboard())
     elif command == ["rewrite-stdin"]:
         payload = rewrite_payload(_read_stdin_text())
