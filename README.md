@@ -2,9 +2,15 @@
 
 ![aismell quick clean preview](preview.png)
 
-An Omarchy panel for cleaning short text that sounds padded by AI. It removes stock phrasing, repeated formulas, and extra adjectives while preserving the message, names, links, dates, numbers, quotations, code, and lists.
+An Omarchy panel for cleaning short text drafted with AI tools. If you ask Claude, ChatGPT, or another assistant to write an email, message, or paragraph for you, aismell quick clean removes the marks that make it read like AI: stock phrasing, repeated formulas, generic conclusions, and inflated wording. It preserves the actual message, names, links, dates, numbers, quotations, code, and lists.
 
 Open it from the bar button or with `super + shift + s`. The panel loads your clipboard into the editor, but nothing is rewritten until you press **clean**. You can edit the text first, compare the cleaned version, and copy it only if it still sounds like you.
+
+## Examples
+
+- You ask ChatGPT to draft a work email. The message is right, but it says “I hope this message finds you well”, “it is important to note”, or “in conclusion”. aismell quick clean trims that filler.
+- You ask Claude to polish a Spanish reply. It comes back correct but too formal, with phrases like “es importante señalar que” or “no solo X, sino también Y”. The plugin makes it more direct without changing the meaning.
+- You have a short paragraph that sounds overproduced. The plugin gives you a cleaner version, then you decide whether to copy it.
 
 ## What it does
 
@@ -65,7 +71,15 @@ omarchy plugin validate .
 
 ## Español
 
-Panel de Omarchy para quitar la palabrería de IA a textos cortos: frases de trámite, fórmulas repetidas y adjetivos de más. Abres desde la barra o con `super + shift + s`, editas si hace falta, presionas **limpiar**, comparas la versión limpia y solo entonces decides si copiarla.
+Panel de Omarchy para quitar la palabrería de IA a textos cortos. Si le pides a Claude, ChatGPT u otro asistente que redacte un correo, mensaje o párrafo por ti, aismell quick clean limpia las marcas típicas de ese texto: frases de trámite, fórmulas repetidas, conclusiones genéricas y adjetivos de más. Conserva el mensaje, nombres, links, fechas, números, citas, código y listas.
+
+Ejemplos:
+
+- Le pides a ChatGPT un correo de trabajo. El contenido sirve, pero viene con “espero que te encuentres bien”, “es importante señalar que” o un cierre inflado. El plugin recorta ese relleno.
+- Le pides a Claude que mejore una respuesta. Queda correcta, pero demasiado formal o robótica. El plugin la vuelve más directa sin cambiar el sentido.
+- Tienes un párrafo corto que suena producido de más. El plugin propone una versión limpia y tú decides si copiarla.
+
+Abres desde la barra o con `super + shift + s`, editas si hace falta, presionas **limpiar**, comparas la versión limpia y solo entonces decides si copiarla.
 
 El texto se envía al servicio online de aismell para generar la propuesta, pero aismell quick clean no lo almacena: el plugin no escribe el texto en disco y el backend no tiene base de datos ni almacenamiento de envíos. No lo uses con secretos ni material confidencial.
 
