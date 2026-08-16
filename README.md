@@ -1,21 +1,21 @@
-# aismell quick clean
+# ai quick clean
 
-![aismell quick clean preview](preview.png)
+![ai quick clean preview](preview.png)
 
-An Omarchy panel for cleaning short text drafted with AI tools. If you ask Claude, ChatGPT, or another assistant to write an email, message, or paragraph for you, aismell quick clean removes the marks that make it read like AI: stock phrasing, repeated formulas, generic conclusions, and inflated wording. It preserves the actual message, names, links, dates, numbers, quotations, code, and lists.
+An Omarchy panel for cleaning short text drafted with ai tools. If you ask Claude, ChatGPT, or another assistant to write an email, message, or paragraph for you, ai quick clean removes the marks that make it read like ai: stock phrasing, repeated formulas, generic conclusions, and inflated wording. It preserves the actual message, names, links, dates, numbers, quotations, code, and lists.
 
 Open it from the bar button or with `super + shift + s`. The panel loads your clipboard into the editor, but nothing is rewritten until you press **clean**. You can edit the text first, compare the cleaned version, and copy it only if it still sounds like you.
 
 ## Examples
 
-- You ask ChatGPT to draft a work email. The message is right, but it says “I hope this message finds you well”, “it is important to note”, or “in conclusion”. aismell quick clean trims that filler.
+- You ask ChatGPT to draft a work email. The message is right, but it says “I hope this message finds you well”, “it is important to note”, or “in conclusion”. ai quick clean trims that filler.
 - You ask Claude to polish a Spanish reply. It comes back correct but too formal, with phrases like “es importante señalar que” or “no solo X, sino también Y”. The plugin makes it more direct without changing the meaning.
 - You have a short paragraph that sounds overproduced. The plugin gives you a cleaner version, then you decide whether to copy it.
 
 ## What it does
 
 - Cleans short English and Spanish messages, emails, and paragraphs, up to 3,000 characters.
-- Removes AI-sounding filler such as “it is important to note”, “not just X, but Y”, generic conclusions, and inflated wording.
+- Removes ai-sounding filler such as “it is important to note”, “not just X, but Y”, generic conclusions, and inflated wording.
 - Keeps the original editable on the left and shows the cleaned version on the right.
 - Copies the cleaned version only when you press **copy**.
 - Does not try to evade AI detectors. It is a writing cleanup tool.
@@ -32,14 +32,14 @@ Open it from the bar button or with `super + shift + s`. The panel loads your cl
 ## How it works
 
 1. The local Omarchy plugin reads the clipboard with `wl-paste` only to prefill the editor.
-2. When you press **clean**, the helper sends the current editor text to `https://aismell-rewrite.brmcl.workers.dev/rewrite`.
-3. The rewrite Worker calls a second Worker running the real aismell detector for English and Spanish signals.
+2. When you press **clean**, the helper sends the current editor text to the online rewrite service.
+3. The rewrite service uses the same detector behind [aismell.me](https://aismell.me) for English and Spanish signals.
 4. Those signals guide Workers AI (`@cf/meta/llama-4-scout-17b-16e-instruct`) to make a conservative rewrite.
 5. The Worker returns JSON with the cleaned text and a short list of changes. The plugin keeps that in memory and shows it in the panel.
 
 ## Storage and privacy
 
-aismell quick clean does **not** store your text.
+ai quick clean does **not** store your text.
 
 - The plugin does not write the source text, cleaned text, or clipboard contents to disk.
 - The backend has no database, KV, R2 bucket, Durable Object, or file storage for submitted text.
@@ -49,7 +49,7 @@ aismell quick clean does **not** store your text.
 ## Installation
 
 ```bash
-omarchy plugin install https://github.com/brm-src/aismell-quick-clean
+omarchy plugin install https://github.com/brm-src/ai-quick-clean
 ```
 
 It registers `super + shift + s` and adds a bar button. It does not use `sudo` or install packages. It needs Omarchy/Hyprland, `curl`, `wl-paste`, and `wl-copy`.
@@ -57,7 +57,7 @@ It registers `super + shift + s` and adds a bar button. It does not use `sudo` o
 To remove only the shortcut:
 
 ```bash
-bash ~/.config/omarchy/plugins/io.github.brm-src.aismell-quick-clean/setup.sh --remove
+bash ~/.config/omarchy/plugins/io.github.brm-src.ai-quick-clean/setup.sh --remove
 ```
 
 ## Development checks
@@ -71,7 +71,7 @@ omarchy plugin validate .
 
 ## Español
 
-Panel de Omarchy para quitar la palabrería de IA a textos cortos. Si le pides a Claude, ChatGPT u otro asistente que redacte un correo, mensaje o párrafo por ti, aismell quick clean limpia las marcas típicas de ese texto: frases de trámite, fórmulas repetidas, conclusiones genéricas y adjetivos de más. Conserva el mensaje, nombres, links, fechas, números, citas, código y listas.
+Panel de Omarchy para quitar la palabrería de IA a textos cortos. Si le pides a Claude, ChatGPT u otro asistente que redacte un correo, mensaje o párrafo por ti, ai quick clean limpia las marcas típicas de ese texto: frases de trámite, fórmulas repetidas, conclusiones genéricas y adjetivos de más. Conserva el mensaje, nombres, links, fechas, números, citas, código y listas.
 
 Ejemplos:
 
@@ -81,7 +81,7 @@ Ejemplos:
 
 Abres desde la barra o con `super + shift + s`, editas si hace falta, presionas **limpiar**, comparas la versión limpia y solo entonces decides si copiarla.
 
-El texto se envía al servicio online de aismell para generar la propuesta, pero aismell quick clean no lo almacena: el plugin no escribe el texto en disco y el backend no tiene base de datos ni almacenamiento de envíos. No lo uses con secretos ni material confidencial.
+El texto se envía al servicio online de reescritura para generar la propuesta. Ese servicio usa el detector de [aismell.me](https://aismell.me), pero ai quick clean no almacena el texto: el plugin no lo escribe en disco y el backend no tiene base de datos ni almacenamiento de envíos. No lo uses con secretos ni material confidencial.
 
 ## License
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Bridge from the Omarchy panel to aismell's hosted cleanup service."""
+"""Bridge from the Omarchy panel to the hosted ai quick clean rewrite service."""
 
 from __future__ import annotations
 

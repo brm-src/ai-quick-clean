@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "id": "io.github.brm-src.aismell-quick-clean",
-  "name": "aismell quick clean",
-  "version": "0.8.0",
+  "id": "io.github.brm-src.ai-quick-clean",
+  "name": "ai quick clean",
+  "version": "0.9.0",
   "author": "Cris",
   "description": "Quita la palabrería de IA a mensajes y correos cortos, en español o inglés.",
   "kinds": ["panel", "bar-widget"],
@@ -12,7 +12,7 @@
     "barWidget": "BarButton.qml"
   },
   "barWidget": {
-    "displayName": "aismell quick clean",
+    "displayName": "ai quick clean",
     "description": "Quita la palabrería de IA a un texto corto.",
     "category": "Plugin",
     "defaultSection": "right",

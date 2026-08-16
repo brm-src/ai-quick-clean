@@ -7,7 +7,7 @@ Item {
   id: root
 
   property var bar: null
-  property string moduleName: "io.github.brm-src.aismell-quick-clean"
+  property string moduleName: "io.github.brm-src.ai-quick-clean"
   property var settings: ({})
   readonly property bool isSpanish: Qt.locale().name.toLowerCase().startsWith("es")
   readonly property bool vertical: bar ? bar.vertical : false

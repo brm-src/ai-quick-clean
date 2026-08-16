@@ -8,7 +8,7 @@ import qs.Ui
 Item {
   id: root
 
-  readonly property string pluginId: "io.github.brm-src.aismell-quick-clean"
+  readonly property string pluginId: "io.github.brm-src.ai-quick-clean"
   readonly property bool isSpanish: uiLanguage === "es"
   readonly property int cardWidth: Math.min(Style.space(760), panel.width - Style.gapsOut * 2)
   property bool opened: false
