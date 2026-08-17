@@ -15,4 +15,4 @@ When the user presses `clean` or `improve`, the current text is sent over HTTPS 
 
 The Worker does not have application storage for submitted text and returns `Cache-Control: no-store`. Cloudflare still handles the request as infrastructure, so this tool is not appropriate for passwords, private keys, regulated information, confidential client material, or text that must stay offline. Cloudflare's own service and retention policies apply to infrastructure outside this repository.
 
-The plugin does not request an API key, install packages, use sudo or pkexec, execute downloaded code, or send telemetry from the desktop.
+The plugin does not request an API key, install packages, request elevated privileges, execute downloaded code, or send desktop telemetry.

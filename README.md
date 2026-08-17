@@ -25,7 +25,7 @@ It is deliberately not an AI detector bypass and it does not promise that a rewr
 omarchy plugin add https://github.com/brm-src/ai-quick-clean.git --enable --yes
 ```
 
-No sudo or pkexec is required. The plugin needs Omarchy/Hyprland, Quickshell, Python 3, `curl`, `wl-paste`, and `wl-copy`.
+No administrator privileges are required. The plugin needs Omarchy/Hyprland, Quickshell, Python 3, `curl`, `wl-paste`, and `wl-copy`.
 
 The optional `Super + Shift + S` shortcut is configured separately:
 
@@ -66,7 +66,7 @@ See [PRIVACY.md](PRIVACY.md) for the full data-flow notes.
 - The Worker runs the aismell analyzer and Cloudflare Workers AI. It has no application database, KV namespace, R2 bucket, Durable Object, or submitted-text store.
 - Responses are sent with `Cache-Control: no-store`.
 - Cloudflare still processes the request as an infrastructure provider. Do not send passwords, private keys, confidential client material, or anything that must remain offline.
-- The plugin asks for no API key, does not install packages, does not use sudo, and does not run downloaded code.
+- The plugin asks for no API key, does not install packages, does not request elevated privileges, and does not run downloaded code.
 
 ## How it works
 
