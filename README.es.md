@@ -1,5 +1,9 @@
 # ai quick clean
 
+<p align="center">
+  <a href="https://www.ko-fi.com/brmcl"><img src="https://ko-fi.com/img/githubbutton_sm.svg" alt="Support me on Ko-fi" /></a>
+</p>
+
 [English](README.md)
 
 ![Vista previa de ai quick clean](preview.png)
