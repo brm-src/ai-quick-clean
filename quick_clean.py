@@ -39,13 +39,16 @@ def _post_rewrite(payload: dict[str, str]) -> dict[str, Any] | None:
     return data if isinstance(data, dict) else None
 
 
-def rewrite_payload(text: str) -> dict[str, object]:
+def rewrite_payload(text: str, mode: str = "clean") -> dict[str, object]:
     if not text.strip():
         return {"ok": False, "errorCode": "empty"}
     if len(text) > MAX_CHARS:
         return {"ok": False, "errorCode": "too-long"}
 
-    result = _post_rewrite({"text": text})
+    request_payload = {"text": text}
+    if mode == "improve":
+        request_payload["mode"] = "improve"
+    result = _post_rewrite(request_payload)
     rewritten = result.get("text") if result else None
     changes = result.get("changes") if result else None
     if not isinstance(rewritten, str) or not rewritten.strip() or not isinstance(changes, list):
@@ -60,14 +63,23 @@ def rewrite_payload(text: str) -> dict[str, object]:
 
 
 def _read_clipboard() -> str:
-    completed = subprocess.run(
+    for command in (
+        ["wl-paste", "--primary", "--no-newline"],
         ["wl-paste", "--no-newline"],
-        check=False,
-        capture_output=True,
-        text=True,
-        timeout=3,
-    )
-    return completed.stdout if completed.returncode == 0 else ""
+    ):
+        try:
+            completed = subprocess.run(
+                command,
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=3,
+            )
+        except (OSError, subprocess.TimeoutExpired):
+            continue
+        if completed.returncode == 0 and completed.stdout:
+            return completed.stdout
+    return ""
 
 
 def _read_stdin_text() -> str:
@@ -109,6 +121,8 @@ def main(argv: list[str] | None = None) -> int:
         payload = rewrite_payload(_read_clipboard())
     elif command == ["rewrite-stdin"]:
         payload = rewrite_payload(_read_stdin_text())
+    elif command == ["rewrite-stdin-improve"]:
+        payload = rewrite_payload(_read_stdin_text(), mode="improve")
     elif command == ["copy-stdin"]:
         payload = copy_text(_read_stdin_text())
     else:

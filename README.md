@@ -1,88 +1,102 @@
 # ai quick clean
 
+[Español](README.es.md)
+
 ![ai quick clean preview](preview.png)
 
-An Omarchy panel for cleaning short text drafted with ai tools. If you ask Claude, ChatGPT, or another assistant to write an email, message, or paragraph for you, ai quick clean removes the marks that make it read like ai: stock phrasing, repeated formulas, generic conclusions, and inflated wording. It preserves the actual message, names, links, dates, numbers, quotations, code, and lists.
+A bilingual Omarchy / Quickshell panel for making short AI-drafted messages sound more direct and human. It keeps the original editable, shows the proposed version beside it, reports the edits, and lets you copy only when you approve them.
 
-Open it from the bar button or with `super + shift + s`. The panel loads your clipboard into the editor, but nothing is rewritten until you press **clean**. You can edit the text first, compare the cleaned version, and copy it only if it still sounds like you.
-
-## Examples
-
-- You ask ChatGPT to draft a work email. The message is right, but it says “I hope this message finds you well”, “it is important to note”, or “in conclusion”. ai quick clean trims that filler.
-- You ask Claude to polish a Spanish reply. It comes back correct but too formal, with phrases like “es importante señalar que” or “no solo X, sino también Y”. The plugin makes it more direct without changing the meaning.
-- You have a short paragraph that sounds overproduced. The plugin gives you a cleaner version, then you decide whether to copy it.
+It is deliberately not an AI detector bypass and it does not promise that a rewrite will evade any detector. It is a writing editor.
 
 ## What it does
 
-- Cleans short English and Spanish messages, emails, and paragraphs, up to 3,000 characters.
-- Removes ai-sounding filler such as “it is important to note”, “not just X, but Y”, generic conclusions, and inflated wording.
-- Keeps the original editable on the left and shows the cleaned version on the right.
-- Copies the cleaned version only when you press **copy**.
-- Does not try to evade ai detectors. It is a writing cleanup tool.
+- Works with English and Spanish messages, emails, and short paragraphs up to 3,000 characters.
+- Reads the Wayland primary selection first, then the regular clipboard, to prefill the editor.
+- `clean` removes only high-confidence filler and leaves direct wording alone.
+- `improve` makes a more visible edit: cuts ceremonial openings, institutional boilerplate, repetition, abstract phrasing, and inflated adjectives while preserving facts and intent.
+- Shows the original and proposed text side by side.
+- Shows an indeterminate progress bar while the online editor is working.
+- Reports how many edits were returned and lists the first three explanations.
+- Never replaces the focused application's text automatically. You must press `copy`.
+
+## Install
+
+```bash
+omarchy plugin add https://github.com/brm-src/ai-quick-clean.git --enable --yes
+```
+
+No sudo or pkexec is required. The plugin needs Omarchy/Hyprland, Quickshell, Python 3, `curl`, `wl-paste`, and `wl-copy`.
+
+The optional `Super + Shift + S` shortcut is configured separately:
+
+```bash
+bash ~/.config/omarchy/plugins/io.github.brm-src.ai-quick-clean/configure-shortcut.sh
+```
+
+Remove only that shortcut with:
+
+```bash
+bash ~/.config/omarchy/plugins/io.github.brm-src.ai-quick-clean/configure-shortcut.sh --remove
+```
+
+Remove the plugin with:
+
+```bash
+omarchy plugin remove io.github.brm-src.ai-quick-clean --yes
+```
 
 ## Use
 
-1. Copy a text, or open the panel and paste/type directly.
-2. Press **clean**.
-3. Compare the cleaned version on the right.
-4. Press **copy** only if you want that version in your clipboard.
+1. Copy or select a short draft, then open **ai quick clean** from the bar.
+2. Edit the text if needed.
+3. Choose `clean` for a conservative pass or `improve` for a more noticeable humanizing edit.
+4. Wait for the progress bar to finish and read the change explanations.
+5. Compare both columns.
+6. Press `copy` only if you want the proposed version in the clipboard.
 
-`escape`, `super + w`, or clicking outside the card closes the panel. `ctrl + enter` runs the cleanup.
+Press `Escape`, `Super + W`, or click outside the card to close it. The `powered by: aismell.me` footer opens the project site.
+
+## Privacy and data flow
+
+See [PRIVACY.md](PRIVACY.md) for the full data-flow notes.
+
+- Opening the panel only reads the primary selection or clipboard to prefill the editor.
+- The plugin does not write source text, rewritten text, or clipboard contents to disk.
+- Text is sent over HTTPS to the public aismell rewrite Worker only after you press `clean` or `improve`.
+- The Worker runs the aismell analyzer and Cloudflare Workers AI. It has no application database, KV namespace, R2 bucket, Durable Object, or submitted-text store.
+- Responses are sent with `Cache-Control: no-store`.
+- Cloudflare still processes the request as an infrastructure provider. Do not send passwords, private keys, confidential client material, or anything that must remain offline.
+- The plugin asks for no API key, does not install packages, does not use sudo, and does not run downloaded code.
 
 ## How it works
 
-1. The local Omarchy plugin reads the clipboard with `wl-paste` only to prefill the editor.
-2. When you press **clean**, the helper sends the current editor text to the online rewrite service.
-3. The rewrite service uses the same detector behind [aismell.me](https://aismell.me) for English and Spanish signals.
-4. Those signals guide Workers AI (`@cf/meta/llama-4-scout-17b-16e-instruct`) to make a conservative rewrite.
-5. The Worker returns JSON with the cleaned text and a short list of changes. The plugin keeps that in memory and shows it in the panel.
+1. `quick_clean.py` reads the selected text locally and enforces the 3,000-character limit.
+2. The Worker sends the text to the aismell analyzer for language and signal evidence.
+3. The Worker chooses the conservative `clean` prompt or the stronger `improve` prompt.
+4. Workers AI returns one proposed text and short change explanations as JSON.
+5. The panel keeps the response in memory and never copies it until you press `copy`.
 
-## Storage and privacy
+## Limitations
 
-ai quick clean does **not** store your text.
-
-- The plugin does not write the source text, cleaned text, or clipboard contents to disk.
-- The backend has no database, KV, R2 bucket, Durable Object, or file storage for submitted text.
-- Responses use `Cache-Control: no-store`.
-- The text is sent over the network to Cloudflare Workers / Workers AI to produce the rewrite, so do not use it for passwords, private keys, client-confidential material, or anything you would not send to an online writing tool.
-
-## Installation
-
-```bash
-omarchy plugin install https://github.com/brm-src/ai-quick-clean
-```
-
-It registers `super + shift + s` and adds a bar button. It does not use `sudo` or install packages. It needs Omarchy/Hyprland, `curl`, `wl-paste`, and `wl-copy`.
-
-To remove only the shortcut:
-
-```bash
-bash ~/.config/omarchy/plugins/io.github.brm-src.ai-quick-clean/setup.sh --remove
-```
+- The service requires an internet connection.
+- A conservative clean may correctly return no changes.
+- `improve` is a proposal, not an authority. Read it before copying.
+- The service accepts English and Spanish only.
+- Text is sent to an online service; this is not an offline or confidential editor.
 
 ## Development checks
 
+Run these from the repository root:
+
 ```bash
-/usr/bin/python3 -m pytest tests -q
+python3 -m pytest tests -q
 python3 -m py_compile quick_clean.py
+bash -n configure-shortcut.sh
 qmllint -I /usr/share/omarchy/shell BarButton.qml QuickClean.qml
 omarchy plugin validate .
+git diff --check
 ```
-
-## Español
-
-Panel de Omarchy para quitar la palabrería de ia a textos cortos. Si le pides a Claude, ChatGPT u otro asistente que redacte un correo, mensaje o párrafo por ti, ai quick clean limpia las marcas típicas de ese texto: frases de trámite, fórmulas repetidas, conclusiones genéricas y adjetivos de más. Conserva el mensaje, nombres, links, fechas, números, citas, código y listas.
-
-Ejemplos:
-
-- Le pides a ChatGPT un correo de trabajo. El contenido sirve, pero viene con “espero que te encuentres bien”, “es importante señalar que” o un cierre inflado. El plugin recorta ese relleno.
-- Le pides a Claude que mejore una respuesta. Queda correcta, pero demasiado formal o robótica. El plugin la vuelve más directa sin cambiar el sentido.
-- Tienes un párrafo corto que suena producido de más. El plugin propone una versión limpia y tú decides si copiarla.
-
-Abres desde la barra o con `super + shift + s`, editas si hace falta, presionas **limpiar**, comparas la versión limpia y solo entonces decides si copiarla.
-
-El texto se envía al servicio online de reescritura para generar la propuesta. Ese servicio usa el detector de [aismell.me](https://aismell.me), pero ai quick clean no almacena el texto: el plugin no lo escribe en disco y el backend no tiene base de datos ni almacenamiento de envíos. No lo uses con secretos ni material confidencial.
 
 ## License
 
-MIT.
+MIT. See [LICENSE](LICENSE).

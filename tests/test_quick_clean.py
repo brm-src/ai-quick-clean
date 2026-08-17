@@ -33,6 +33,19 @@ def test_sends_the_edited_text_to_the_public_aismell_rewrite_service(monkeypatch
     }
 
 
+def test_sends_improve_mode_to_the_public_service(monkeypatch):
+    sent = {}
+
+    def fake_post(payload):
+        sent.update(payload)
+        return {"text": "The report is ready.", "changes": ["Cut boilerplate."]}
+
+    monkeypatch.setattr(quick_clean, "_post_rewrite", fake_post)
+
+    assert rewrite_payload("It is important to note that the report is ready.", mode="improve")["ok"] is True
+    assert sent == {"text": "It is important to note that the report is ready.", "mode": "improve"}
+
+
 def test_does_not_claim_success_when_the_rewrite_service_is_unavailable(monkeypatch):
     monkeypatch.setattr(quick_clean, "_post_rewrite", lambda payload: None)
 

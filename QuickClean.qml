@@ -10,10 +10,11 @@ Item {
 
   readonly property string pluginId: "io.github.brm-src.ai-quick-clean"
   readonly property bool isSpanish: uiLanguage === "es"
-  readonly property int cardWidth: Math.min(Style.space(760), panel.width - Style.gapsOut * 2)
+  readonly property int cardWidth: Math.min(Style.space(560), panel.width - Style.gapsOut * 2)
   property bool opened: false
   property bool busy: false
   property bool hasResult: false
+  property bool backdropReady: false
   property string uiLanguage: Qt.locale().name.toLowerCase().startsWith("es") ? "es" : "en"
   property string sourceText: ""
   property string cleanedText: ""
@@ -40,6 +41,8 @@ Item {
 
   function open() {
     root.opened = true
+    root.backdropReady = false
+    backdropGuard.restart()
     root.hasResult = false
     root.cleanedText = ""
     root.changes = []
@@ -53,6 +56,8 @@ Item {
 
   function close() {
     root.opened = false
+    root.backdropReady = false
+    backdropGuard.stop()
     root.busy = false
     root.callback = null
   }
@@ -86,13 +91,20 @@ Item {
     root.callback = null
   }
 
-  function cleanText() {
+  function changesSummary() {
+    return root.changes.slice(0, 3).map(function(item) { return "• " + String(item) }).join("\n")
+  }
+
+  function cleanText(mode) {
+    mode = mode === "improve" ? "improve" : "clean"
     if (!root.sourceText.trim()) {
       root.status = root.words("Pega o escribe un texto primero.", "Paste or type some text first.")
       return
     }
-    root.status = root.words("Limpiando…", "Cleaning…")
-    root.runHelper("rewrite-stdin", root.sourceText, function(payload) {
+    root.status = mode === "improve"
+      ? root.words("Mejorando el texto…", "Improving the text…")
+      : root.words("Analizando y limpiando…", "Analyzing and cleaning…")
+    root.runHelper(mode === "improve" ? "rewrite-stdin-improve" : "rewrite-stdin", root.sourceText, function(payload) {
       if (!payload.ok) {
         root.hasResult = false
         root.cleanedText = ""
@@ -105,8 +117,8 @@ Item {
       root.changes = payload.changes || []
       root.hasResult = true
       root.status = root.changes.length > 0
-        ? root.words("Listo. Compara y copia si te gusta.", "Done. Compare it and copy if you like it.")
-        : root.words("Tu texto ya estaba limpio.", "Your text was already clean.")
+        ? root.words("Listo · " + root.changes.length + " cambios. Compara y copia si te gusta.", "Done · " + root.changes.length + " changes. Compare it and copy if you like it.")
+        : root.words("No encontré cambios claros.", "I found no clear changes.")
     })
   }
 
@@ -148,6 +160,13 @@ Item {
     }
   }
 
+  Timer {
+    id: backdropGuard
+    interval: 200
+    repeat: false
+    onTriggered: root.backdropReady = true
+  }
+
   PanelWindow {
     id: panel
     screen: Quickshell.screens[0]
@@ -177,9 +196,12 @@ Item {
 
     Rectangle {
       anchors.fill: parent
-      color: Color.menu.scrim
+      // Keep this as a popup-style plugin: outside clicks still close it,
+      // but the desktop does not get dimmed like a separate application.
+      color: "transparent"
       MouseArea {
         anchors.fill: parent
+        enabled: root.backdropReady
         onClicked: root.close()
       }
     }
@@ -187,8 +209,11 @@ Item {
     BorderSurface {
         id: card
         width: root.cardWidth
-        height: Math.min(Style.space(520), parent.height - Style.gapsOut * 2)
-        anchors.centerIn: parent
+        height: Math.min(Style.space(520), parent.height - Style.bar.sizeHorizontal - Style.gapsOut * 3)
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.topMargin: Style.bar.sizeHorizontal + Style.gapsOut
+        anchors.rightMargin: Style.gapsOut
         radius: Style.cornerRadius
         color: Color.menu.background
         borderSpec: Border.surfaceSpec("menu", "border", Color.menu.border, Math.max(1, Style.space(2)))
@@ -244,12 +269,55 @@ Item {
 
           Text {
             width: parent.width
-            text: root.busy ? root.words("Limpiando…", "Cleaning…") : root.status
+            text: root.status
             color: Color.menu.text
             opacity: root.hasResult ? 0.82 : 0.62
             font.family: Style.font.menuFamily
             font.pixelSize: Style.font.body
             wrapMode: Text.Wrap
+          }
+
+          Item {
+            id: progressBar
+            width: parent.width
+            height: Style.space(5)
+            visible: root.busy
+            clip: true
+
+            Rectangle {
+              anchors.fill: parent
+              radius: height / 2
+              color: Color.menu.text
+              opacity: 0.14
+            }
+            Rectangle {
+              id: progressIndicator
+              width: Math.max(Style.space(72), parent.width * 0.28)
+              height: parent.height
+              radius: height / 2
+              color: Color.accent
+              x: -width
+
+              SequentialAnimation on x {
+                running: root.busy
+                loops: Animation.Infinite
+                NumberAnimation { from: -progressIndicator.width; to: progressBar.width; duration: 900; easing.type: Easing.InOutQuad }
+                PauseAnimation { duration: 120 }
+              }
+            }
+          }
+
+          Text {
+            width: parent.width
+            visible: root.hasResult && root.changes.length > 0
+            text: root.changesSummary()
+            color: Color.menu.text
+            opacity: 0.58
+            font.family: Style.font.menuFamily
+            font.pixelSize: Style.font.caption
+            wrapMode: Text.Wrap
+            maximumLineCount: 3
+            elide: Text.ElideRight
           }
 
           Row {
@@ -398,8 +466,16 @@ Item {
               text: root.words("limpiar", "clean")
               selected: !root.hasResult
               active: root.sourceText !== "" && !root.busy
-              tooltipText: root.words("Quita el relleno del texto de la izquierda.", "Strip the padding from the text on the left.")
-              onClicked: root.cleanText()
+              tooltipText: root.words("Quita solo el relleno más evidente.", "Remove only the clearest filler.")
+              onClicked: root.cleanText("clean")
+            }
+            Button {
+              id: improveAction
+              text: root.words("mejorar", "improve")
+              selected: false
+              active: root.sourceText !== "" && !root.busy
+              tooltipText: root.words("Hace una edición más visible: corta fórmulas, redundancias y tono institucional.", "Makes a more visible edit: cuts boilerplate, repetition, and institutional tone.")
+              onClicked: root.cleanText("improve")
             }
             Button {
               id: copyAction
@@ -411,10 +487,34 @@ Item {
               onClicked: root.copyCleanText()
             }
             Item {
-              width: Math.max(0, parent.width - cleanAction.width - (copyAction.visible ? copyAction.width + parent.spacing : 0))
+              id: actionSpacer
+              width: Math.max(0, parent.width - cleanAction.width - improveAction.width - (copyAction.visible ? copyAction.width + parent.spacing : 0) - poweredBy.width - parent.spacing * 2)
               height: 1
             }
+            Item {
+              id: poweredBy
+              width: Style.space(150)
+              height: parent.height
+
+              Text {
+                id: poweredByLabel
+                anchors.right: parent.right
+                anchors.verticalCenter: parent.verticalCenter
+                text: "powered by: aismell.me"
+                color: Color.menu.text
+                opacity: 0.62
+                font.family: Style.font.menuFamily
+                font.pixelSize: Style.font.bodySmall
+              }
+
+              MouseArea {
+                anchors.fill: poweredByLabel
+                cursorShape: Qt.PointingHandCursor
+                onClicked: Qt.openUrlExternally("https://aismell.me")
+              }
+            }
           }
+
         }
       }
     }
