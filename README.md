@@ -8,18 +8,20 @@
 
 ![ai quick clean preview](preview.png)
 
-A bilingual Omarchy / Quickshell panel for making short AI-drafted messages sound more direct and human. It keeps the original editable, shows the proposed version beside it, reports the edits, and lets you copy only when you approve them.
+A bilingual Omarchy / Quickshell panel for cleaning AI-drafted text, improving wording, and checking bibliographies. It keeps the original editable, shows the proposed version beside it, reports the edits, and lets you copy only when you approve them.
 
 It is deliberately not an AI detector bypass and it does not promise that a rewrite will evade any detector. It is a writing editor.
 
 ## What it does
 
-- Works with English and Spanish messages, emails, and short paragraphs up to 3,000 characters.
+- Works with English and Spanish messages, emails, and short paragraphs up to 3,000 characters (12,000 for bibliographies).
 - Reads the Wayland primary selection first, then the regular clipboard, to prefill the editor.
-- `clean` removes only high-confidence filler and leaves direct wording alone.
-- `improve` makes a more visible edit: cuts ceremonial openings, institutional boilerplate, repetition, abstract phrasing, and inflated adjectives while preserving facts and intent.
-- Shows the original and proposed text side by side.
-- Shows an indeterminate progress bar while the online editor is working.
+- Three modes:
+  - **limpiar** — removes high-confidence filler and improves wording in one pass.
+  - **mejorar** — more visible edit: cuts ceremonial openings, institutional boilerplate, repetition, abstract phrasing, and inflated adjectives while preserving facts and intent.
+  - **bibliografía** — checks a pasted bibliography against Crossref and OpenAlex: finds exact DOI matches, title/author/year lookups, detects duplicates and structural issues, and scores the list.
+- Shows the original and proposed text side by side for clean/improve; single editor + results for bibliography.
+- Shows an indeterminate progress bar while the online service is working.
 - Reports how many edits were returned and lists the first three explanations.
 - Never replaces the focused application's text automatically. You must press `copy`.
 
@@ -52,11 +54,11 @@ omarchy plugin remove io.github.brm-src.ai-quick-clean --yes
 ## Use
 
 1. Copy or select a short draft, then open **ai quick clean** from the bar.
-2. Edit the text if needed.
-3. Choose `clean` for a conservative pass or `improve` for a more noticeable humanizing edit.
-4. Wait for the progress bar to finish and read the change explanations.
-5. Compare both columns.
-6. Press `copy` only if you want the proposed version in the clipboard.
+2. Choose the mode at the top: **limpiar**, **mejorar**, or **bibliografía**.
+3. Edit the text if needed.
+4. Press the action button for the chosen mode (`limpiar` / `mejorar` / `revisar`).
+5. Wait for the progress bar to finish and read the change explanations or bibliography report.
+6. For clean/improve: compare both columns and press `copy` only if you want the proposed version in the clipboard.
 
 Press `Escape`, `Super + W`, or click outside the card to close it. The `powered by: aismell.me` footer opens the project site.
 
@@ -66,7 +68,7 @@ See [PRIVACY.md](PRIVACY.md) for the full data-flow notes.
 
 - Opening the panel only reads the primary selection or clipboard to prefill the editor.
 - The plugin does not write source text, rewritten text, or clipboard contents to disk.
-- Text is sent over HTTPS to the public aismell rewrite Worker only after you press `clean` or `improve`.
+- Text is sent over HTTPS to the public aismell rewrite Worker only after you press an action button.
 - The Worker runs the aismell analyzer and Cloudflare Workers AI. It has no application database, KV namespace, R2 bucket, Durable Object, or submitted-text store.
 - Responses are sent with `Cache-Control: no-store`.
 - Cloudflare still processes the request as an infrastructure provider. Do not send passwords, private keys, confidential client material, or anything that must remain offline.
@@ -74,17 +76,26 @@ See [PRIVACY.md](PRIVACY.md) for the full data-flow notes.
 
 ## How it works
 
+### Clean / Improve
 1. `quick_clean.py` reads the selected text locally and enforces the 3,000-character limit.
 2. The Worker sends the text to the aismell analyzer for language and signal evidence.
 3. The Worker chooses the conservative `clean` prompt or the stronger `improve` prompt.
 4. Workers AI returns one proposed text and short change explanations as JSON.
 5. The panel keeps the response in memory and never copies it until you press `copy`.
 
+### Bibliography
+1. `quick_clean.py` reads the pasted text locally and enforces the 12,000-character limit.
+2. The Worker parses entries, then queries Crossref REST and OpenAlex Works (by exact DOI or title+author+year).
+3. A local OpenAlex fallback runs if the Worker cannot reach the external APIs.
+4. Results include a 0-100 score, entry count, findings, per-entry match status, and Google Scholar links.
+5. The panel shows the report; you can click an entry's Scholar link to open the search.
+
 ## Limitations
 
 - The service requires an internet connection.
 - A conservative clean may correctly return no changes.
 - `improve` is a proposal, not an authority. Read it before copying.
+- Bibliography lookup depends on external APIs (Crossref, OpenAlex); network issues may reduce coverage.
 - The service accepts English and Spanish only.
 - Text is sent to an online service; this is not an offline or confidential editor.
 

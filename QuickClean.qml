@@ -16,28 +16,64 @@ Item {
   property bool hasResult: false
   property bool backdropReady: false
   property string uiLanguage: Qt.locale().name.toLowerCase().startsWith("es") ? "es" : "en"
+  property string mode: "clean"  // clean, improve, bibliography
   property string sourceText: ""
   property string cleanedText: ""
   property var changes: []
+  property var report: ({})
   property string status: ""
   property var callback: null
 
   function words(es, en) { return root.isSpanish ? es : en }
 
   function errorText(payload) {
-    switch (payload.errorCode) {
-      case "empty": return root.words("Pega o escribe un texto primero.", "Paste or type some text first.")
-      case "too-long": return root.words("Son demasiadas palabras. Prueba con menos de 3.000 caracteres.", "That is too long. Try under 3,000 characters.")
-      case "rewrite-unavailable": return root.words("No hay conexión con el servicio. Intenta de nuevo.", "No connection to the service. Try again.")
-      case "nothing-to-copy": return root.words("Todavía no hay nada que copiar.", "There is nothing to copy yet.")
-      case "clipboard-failed": return root.words("No pude usar el portapapeles.", "I could not use the clipboard.")
-      default: return root.words("No pude hacerlo.", "I could not do that.")
+    if (root.mode === "bibliography") {
+      switch (payload.errorCode) {
+        case "empty": return root.words("Pega una bibliografía primero.", "Paste a bibliography first.")
+        case "too-long": return root.words("Es demasiado larga. Usa menos de 12.000 caracteres.", "That is too long. Use fewer than 12,000 characters.")
+        case "check-unavailable": return root.words("No hay conexión con el servicio. Intenta de nuevo.", "The service is unavailable. Try again.")
+        default: return root.words("No pude revisar la bibliografía.", "I could not check the bibliography.")
+      }
+    } else {
+      switch (payload.errorCode) {
+        case "empty": return root.words("Pega o escribe un texto primero.", "Paste or type some text first.")
+        case "too-long": return root.words("Son demasiadas palabras. Prueba con menos de 3.000 caracteres.", "That is too long. Try under 3,000 characters.")
+        case "rewrite-unavailable": return root.words("No hay conexión con el servicio. Intenta de nuevo.", "No connection to the service. Try again.")
+        case "nothing-to-copy": return root.words("Todavía no hay nada que copiar.", "There is nothing to copy yet.")
+        case "clipboard-failed": return root.words("No pude usar el portapapeles.", "I could not use the clipboard.")
+        default: return root.words("No pude hacerlo.", "I could not do that.")
+      }
     }
   }
 
-  readonly property string idleHint: words(
-    "Pega tu texto y presiona limpiar.",
-    "Paste your text and press clean.")
+  readonly property var titles: {
+    clean: root.words("Quitar palabrería de ia", "strip ai waffle"),
+    improve: root.words("Mejorar redacción", "improve wording"),
+    bibliography: root.words("Revisar bibliografía", "check bibliography")
+  }
+
+  readonly property var hints: {
+    clean: root.words("Pega tu texto y presiona limpiar.", "Paste your text and press clean."),
+    improve: root.words("Pega tu texto y presiona mejorar.", "Paste your text and press improve."),
+    bibliography: root.words("Pega una bibliografía y presiona revisar.", "Paste a bibliography and press check.")
+  }
+
+  readonly property var idleHint: root.hints[root.mode]
+
+  function setMode(newMode) {
+    if (root.mode === newMode) return
+    root.mode = newMode
+    root.hasResult = false
+    root.cleanedText = ""
+    root.changes = []
+    root.report = ({})
+    root.status = root.idleHint
+    if (newMode === "clean" || newMode === "improve") {
+      root.runHelper("read-clipboard", "", function(payload) {
+        if (payload.ok && String(payload.source || "").trim() !== "") root.sourceText = String(payload.source)
+      })
+    }
+  }
 
   function open() {
     root.opened = true
@@ -46,12 +82,13 @@ Item {
     root.hasResult = false
     root.cleanedText = ""
     root.changes = []
+    root.report = ({})
     root.status = root.idleHint
-    // Whatever the person just copied is almost always what they want cleaned,
-    // so it arrives already loaded instead of behind a second button.
-    root.runHelper("read-clipboard", "", function(payload) {
-      if (payload.ok && String(payload.source || "").trim() !== "") root.sourceText = String(payload.source)
-    })
+    if (root.mode === "clean" || root.mode === "improve") {
+      root.runHelper("read-clipboard", "", function(payload) {
+        if (payload.ok && String(payload.source || "").trim() !== "") root.sourceText = String(payload.source)
+      })
+    }
   }
 
   function close() {
@@ -81,9 +118,8 @@ Item {
   function handlePayload(raw) {
     root.busy = false
     var payload
-    try {
-      payload = JSON.parse(String(raw || "{}"))
-    } catch (error) {
+    try { payload = JSON.parse(String(raw || "{}")) }
+    catch (error) {
       root.status = root.words("No pude leer la respuesta.", "I could not read the response.")
       return
     }
@@ -122,12 +158,70 @@ Item {
     })
   }
 
+  function checkBibliography() {
+    if (!root.sourceText.trim()) {
+      root.status = root.words("Pega una bibliografía primero.", "Paste a bibliography first.")
+      return
+    }
+    root.status = root.words("Buscando coincidencias en Crossref y OpenAlex…", "Searching for matches in Crossref and OpenAlex…")
+    root.runHelper("check-stdin", root.sourceText, function(payload) {
+      if (!payload.ok) {
+        root.hasResult = false
+        root.report = ({})
+        root.status = root.errorText(payload)
+        return
+      }
+      root.report = payload.report || ({})
+      root.hasResult = true
+      root.status = root.words("Revisión lista. Lee los hallazgos.", "Check complete. Read the findings.")
+    })
+  }
+
   function copyCleanText() {
     root.runHelper("copy-stdin", root.cleanedText, function(payload) {
       root.status = payload.ok
         ? root.words("Copiado. Ya puedes pegarlo.", "Copied. You can paste it now.")
         : root.errorText(payload)
     })
+  }
+
+  function lookupLabel(item) {
+    var status = item.status === "found"
+      ? root.words("encontrada", "found")
+      : item.status === "possible"
+        ? root.words("posible", "possible")
+        : item.status === "not-found"
+          ? root.words("sin coincidencia", "no match")
+          : root.words("servicio no disponible", "service unavailable")
+    var source = item.match ? item.match.source : (item.sources || []).map(function(source) { return source.source }).join(" + ")
+    var unavailable = (item.sources || []).filter(function(source) { return source.status === "unavailable" }).map(function(source) { return source.source })
+    var responded = (item.sources || []).filter(function(source) { return source.status === "responded" && (!item.match || source.source !== item.match.source) }).map(function(source) { return source.source })
+    if (unavailable.length) source += root.words(" · " + unavailable.join(" + ") + " no disponible", " · " + unavailable.join(" + ") + " unavailable")
+    if (responded.length) source += root.words(" · " + responded.join(" + ") + " respondió", " · " + responded.join(" + ") + " responded")
+    return root.words("Entrada ", "Entry ") + item.entry + " · " + status + " · " + source + (item.scholarUrl ? " · Google Scholar ↗" : "")
+  }
+
+  function statusLabel() {
+    if (!root.hasReport) return ""
+    if (root.report.status === "attention") return root.words("necesita atención", "needs attention")
+    if (root.report.status === "review") return root.words("conviene revisar", "worth reviewing")
+    return root.words("sin problemas claros", "no clear problems")
+  }
+
+  function findingLabel(item) {
+    var number = item.entry ? (root.words("Entrada ", "Entry ") + item.entry + " · ") : ""
+    return number + String(item.message || "")
+  }
+
+  function lookupSummary() {
+    var lookup = root.report.lookup || ({})
+    var results = lookup.results || []
+    var found = results.filter(function(item) { return item.status === "found" }).length
+    var possible = results.filter(function(item) { return item.status === "possible" }).length
+    return root.words(
+      "Búsqueda externa: " + found + " coincidencias" + (possible ? " · " + possible + " posibles" : "") + " · Crossref + OpenAlex · Google Scholar ↗",
+      "External search: " + found + " matches" + (possible ? " · " + possible + " possible" : "") + " · Crossref + OpenAlex · Google Scholar ↗"
+    )
   }
 
   IpcHandler {
@@ -178,9 +272,6 @@ Item {
     WlrLayershell.layer: WlrLayer.Overlay
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
 
-    // A layer surface is not a window, so the compositor's close-window bind
-    // never reaches it. Escape and clicking the backdrop are the ways out, and
-    // both live here so neither depends on which child holds focus.
     Item {
       id: keyCatcher
       anchors.fill: parent
@@ -196,8 +287,6 @@ Item {
 
     Rectangle {
       anchors.fill: parent
-      // Keep this as a popup-style plugin: outside clicks still close it,
-      // but the desktop does not get dimmed like a separate application.
       color: "transparent"
       MouseArea {
         anchors.fill: parent
@@ -209,7 +298,7 @@ Item {
     BorderSurface {
         id: card
         width: root.cardWidth
-        height: Math.min(Style.space(520), parent.height - Style.bar.sizeHorizontal - Style.gapsOut * 3)
+        height: Math.min(root.mode === "bibliography" ? Style.space(560) : Style.space(520), parent.height - Style.bar.sizeHorizontal - Style.gapsOut * 3)
         anchors.top: parent.top
         anchors.right: parent.right
         anchors.topMargin: Style.bar.sizeHorizontal + Style.gapsOut
@@ -219,7 +308,6 @@ Item {
         borderSpec: Border.surfaceSpec("menu", "border", Color.menu.border, Math.max(1, Style.space(2)))
         padding: Style.spacing.panelPadding
 
-        // Swallow clicks on the card so the backdrop's close does not fire.
         MouseArea { anchors.fill: parent }
 
         Column {
@@ -236,10 +324,10 @@ Item {
 
             Column {
               id: titleColumn
-              width: parent.width - closeButton.width - Style.spacing.md
+              width: parent.width - modeSelector.width - closeButton.width - Style.spacing.md * 2
               spacing: Style.spacing.xs
               Text {
-                text: root.words("Quitar palabrería de ia", "strip ai waffle")
+                text: root.titles[root.mode]
                 color: Color.menu.text
                 font.family: Style.font.menuFamily
                 font.pixelSize: Style.font.title
@@ -247,9 +335,13 @@ Item {
               }
               Text {
                 width: parent.width
-                text: root.words(
-                  "Le saca el relleno que suena a texto escrito por ia: frases de trámite, fórmulas repetidas y adjetivos de más. Conserva el mensaje, nombres, links y datos.",
-                  "Removes the padding that makes text sound ai-written: stock phrases, repeated formulas, and extra adjectives. Keeps your message, names, links, and numbers.")
+                text: root.mode === "bibliography"
+                  ? root.words(
+                      "Pega una bibliografía (una entrada por línea). Busca en Crossref y OpenAlex, detecta duplicados, estructura y fechas.",
+                      "Paste a bibliography (one entry per line). Searches Crossref and OpenAlex, detects duplicates, structure, and dates.")
+                  : root.words(
+                      "Le saca el relleno que suena a texto escrito por ia: frases de trámite, fórmulas repetidas y adjetivos de más. Conserva el mensaje, nombres, links y datos.",
+                      "Removes the padding that makes text sound ai-written: stock phrases, repeated formulas, and extra adjectives. Keeps your message, names, links, and numbers.")
                 color: Color.menu.text
                 opacity: 0.66
                 font.family: Style.font.menuFamily
@@ -257,6 +349,19 @@ Item {
                 wrapMode: Text.Wrap
               }
             }
+
+            ButtonGroup {
+              id: modeSelector
+              anchors.verticalCenter: parent.verticalCenter
+              options: [
+                { value: "clean", label: root.words("limpiar", "clean"), tooltip: root.words("Quita el relleno de ia y mejora la redacción.", "Removes ai filler and improves wording.") },
+                { value: "improve", label: root.words("mejorar", "improve"), tooltip: root.words("Edición más visible: corta fórmulas, redundancias y tono institucional.", "More visible edit: cuts boilerplate, repetition, and institutional tone.") },
+                { value: "bibliography", label: root.words("bibliografía", "bibliography"), tooltip: root.words("Revisa referencias contra Crossref y OpenAlex.", "Checks references against Crossref and OpenAlex.") }
+              ]
+              value: root.mode
+              onChanged: root.setMode(value)
+            }
+
             Button {
               id: closeButton
               anchors.verticalCenter: parent.verticalCenter
@@ -309,7 +414,7 @@ Item {
 
           Text {
             width: parent.width
-            visible: root.hasResult && root.changes.length > 0
+            visible: root.mode !== "bibliography" && root.hasResult && root.changes.length > 0
             text: root.changesSummary()
             color: Color.menu.text
             opacity: 0.58
@@ -325,7 +430,166 @@ Item {
             height: parent.height - y - actions.height - Style.spacing.md
             spacing: Style.spacing.md
 
+            // BIBLIOGRAPHY MODE - single column
             BorderSurface {
+              visible: root.mode === "bibliography"
+              width: parent.width
+              height: parent.height
+              radius: Style.cornerRadius
+              color: Style.controlFill(false, false, Color.menu.text, Color.accent)
+              borderSpec: Border.controlSpec("normal", Color.menu.text, Color.accent)
+              padding: Style.spacing.controlPaddingX
+
+              Column {
+                anchors.fill: parent
+                anchors.topMargin: parent.contentTopInset
+                anchors.rightMargin: parent.contentRightInset
+                anchors.bottomMargin: parent.contentBottomInset
+                anchors.leftMargin: parent.contentLeftInset
+                spacing: Style.spacing.sm
+
+                TextEdit {
+                  id: bibSourceEditor
+                  width: parent.width
+                  height: Math.min(Style.space(200), parent.height * 0.5)
+                  text: root.sourceText
+                  color: Color.menu.text
+                  opacity: 0.9
+                  font.family: Style.font.menuFamily
+                  font.pixelSize: Style.font.body
+                  wrapMode: TextEdit.Wrap
+                  selectByMouse: true
+                  textFormat: TextEdit.PlainText
+                  Keys.onEscapePressed: root.close()
+                  onTextChanged: {
+                    if (activeFocus && text !== root.sourceText) {
+                      root.sourceText = text
+                      root.hasResult = false
+                      root.report = ({})
+                      root.status = root.idleHint
+                    }
+                  }
+                  Text {
+                    visible: bibSourceEditor.text === "" && !bibSourceEditor.activeFocus
+                    anchors.fill: parent
+                    text: root.words("Una entrada por línea o separada por espacios en blanco.", "One entry per line or separated by blank lines.")
+                    color: Color.menu.text
+                    opacity: 0.45
+                    font: bibSourceEditor.font
+                    wrapMode: Text.Wrap
+                  }
+                }
+
+                Flickable {
+                  width: parent.width
+                  height: parent.height - y
+                  contentWidth: width
+                  contentHeight: resultsColumn.implicitHeight
+                  clip: true
+                  visible: root.hasResult
+
+                  Column {
+                    id: resultsColumn
+                    width: parent.width
+                    spacing: Style.spacing.sm
+
+                    Row {
+                      width: parent.width
+                      spacing: Style.spacing.md
+                      Text {
+                        text: root.hasResult ? String(root.report.score || 0) + "/100" : ""
+                        color: Color.accent
+                        font.family: Style.font.menuFamily
+                        font.pixelSize: Style.font.title
+                        font.bold: true
+                      }
+                      Column {
+                        width: parent.width - 100
+                        Text {
+                          text: root.statusLabel()
+                          color: Color.menu.text
+                          font.family: Style.font.menuFamily
+                          font.pixelSize: Style.font.body
+                          font.bold: true
+                        }
+                        Text {
+                          text: root.words(
+                            String(root.report.entryCount || 0) + " entradas · " + String((root.report.findings || []).length) + " hallazgos",
+                            String(root.report.entryCount || 0) + " entries · " + String((root.report.findings || []).length) + " findings")
+                          color: Color.menu.text
+                          opacity: 0.62
+                          font.family: Style.font.menuFamily
+                          font.pixelSize: Style.font.bodySmall
+                        }
+                      }
+                    }
+
+                    Text {
+                      width: parent.width
+                      visible: root.report.analysis && root.report.analysis.truncated
+                      text: root.words("El análisis lingüístico cubre los primeros 3.000 caracteres; las comprobaciones estructurales cubren todo el texto.", "Linguistic analysis covers the first 3,000 characters; structural checks cover the full text.")
+                      color: Color.menu.text
+                      opacity: 0.58
+                      font.family: Style.font.menuFamily
+                      font.pixelSize: Style.font.caption
+                      wrapMode: Text.Wrap
+                    }
+
+                    Text {
+                      width: parent.width
+                      visible: root.report.lookup !== undefined
+                      text: root.lookupSummary()
+                      color: Color.accent
+                      opacity: 0.82
+                      font.family: Style.font.menuFamily
+                      font.pixelSize: Style.font.bodySmall
+                      wrapMode: Text.Wrap
+                    }
+
+                    Repeater {
+                      model: root.report.lookup ? (root.report.lookup.results || []) : []
+                      delegate: Item {
+                        width: resultsColumn.width
+                        height: resultLabel.implicitHeight
+                        Text {
+                          id: resultLabel
+                          width: parent.width
+                          text: "• " + root.lookupLabel(modelData)
+                          color: modelData.status === "found" ? Color.accent : Color.menu.text
+                          opacity: modelData.status === "found" ? 0.92 : 0.62
+                          font.family: Style.font.menuFamily
+                          font.pixelSize: Style.font.caption
+                          wrapMode: Text.Wrap
+                        }
+                        MouseArea {
+                          anchors.fill: parent
+                          enabled: modelData.scholarUrl !== ""
+                          cursorShape: Qt.PointingHandCursor
+                          onClicked: Qt.openUrlExternally(modelData.scholarUrl)
+                        }
+                      }
+                    }
+
+                    Repeater {
+                      model: root.report.findings || []
+                      delegate: Text {
+                        width: resultsColumn.width
+                        text: "• " + root.findingLabel(modelData)
+                        color: modelData.severity === "high" ? Color.accent : Color.menu.text
+                        opacity: modelData.severity === "high" ? 0.95 : 0.76
+                        font.family: Style.font.menuFamily
+                        font.pixelSize: Style.font.bodySmall
+                        wrapMode: Text.Wrap
+                      }
+                    }
+                  }
+                }
+              }
+            }
+
+            // CLEAN / IMPROVE MODE - two columns
+            BorderSurface {
+              visible: root.mode !== "bibliography"
               width: (parent.width - parent.spacing) / 2
               height: parent.height
               radius: Style.cornerRadius
@@ -399,6 +663,7 @@ Item {
             }
 
             BorderSurface {
+              visible: root.mode !== "bibliography"
               width: (parent.width - parent.spacing) / 2
               height: parent.height
               radius: Style.cornerRadius
@@ -463,23 +728,42 @@ Item {
 
             Button {
               id: cleanAction
+              visible: root.mode === "clean"
               text: root.words("limpiar", "clean")
               selected: !root.hasResult
               active: root.sourceText !== "" && !root.busy
-              tooltipText: root.words("Quita solo el relleno más evidente.", "Remove only the clearest filler.")
+              tooltipText: root.words("Quita el relleno de ia y mejora la redacción.", "Removes ai filler and improves wording.")
               onClicked: root.cleanText("clean")
             }
             Button {
               id: improveAction
+              visible: root.mode === "improve"
               text: root.words("mejorar", "improve")
-              selected: false
+              selected: !root.hasResult
               active: root.sourceText !== "" && !root.busy
-              tooltipText: root.words("Hace una edición más visible: corta fórmulas, redundancias y tono institucional.", "Makes a more visible edit: cuts boilerplate, repetition, and institutional tone.")
+              tooltipText: root.words("Edición más visible: corta fórmulas, redundancias y tono institucional.", "More visible edit: cuts boilerplate, repetition, and institutional tone.")
               onClicked: root.cleanText("improve")
             }
             Button {
+              id: checkAction
+              visible: root.mode === "bibliography"
+              text: root.words("revisar", "check")
+              selected: !root.hasResult
+              active: root.sourceText.trim() !== "" && !root.busy
+              tooltipText: root.words("Busca coincidencias y revisa la estructura.", "Searches for matches and reviews structure.")
+              onClicked: root.checkBibliography()
+            }
+            Button {
+              id: clearAction
+              visible: root.mode === "bibliography"
+              text: root.words("limpiar", "clear")
+              selected: false
+              active: !root.busy
+              onClicked: { root.sourceText = ""; root.hasResult = false; root.report = ({}); root.status = root.idleHint }
+            }
+            Button {
               id: copyAction
-              visible: root.hasResult && root.cleanedText !== ""
+              visible: root.mode !== "bibliography" && root.hasResult && root.cleanedText !== ""
               selected: true
               active: !root.busy
               text: root.words("copiar", "copy")
@@ -488,7 +772,7 @@ Item {
             }
             Item {
               id: actionSpacer
-              width: Math.max(0, parent.width - cleanAction.width - improveAction.width - (copyAction.visible ? copyAction.width + parent.spacing : 0) - poweredBy.width - parent.spacing * 2)
+              width: Math.max(0, parent.width - cleanAction.width - improveAction.width - checkAction.width - clearAction.width - (copyAction.visible ? copyAction.width + parent.spacing : 0) - poweredBy.width - parent.spacing * 2)
               height: 1
             }
             Item {
@@ -518,4 +802,5 @@ Item {
         }
       }
     }
+  }
 }

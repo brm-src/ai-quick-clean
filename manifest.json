@@ -2,10 +2,10 @@
   "schemaVersion": 1,
   "id": "io.github.brm-src.ai-quick-clean",
   "name": "ai quick clean",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "author": "Cris",
   "homepage": "https://aismell.me",
-  "description": "Quita la palabrería de ia a mensajes y correos cortos, en español o inglés.",
+  "description": "Quitar la palabrería de ia, mejorar la redacción y revisar bibliografías en español o inglés.",
   "kinds": ["panel", "bar-widget"],
   "keepLoaded": true,
   "entryPoints": {
