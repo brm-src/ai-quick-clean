@@ -3,10 +3,13 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import subprocess
 import sys
+import time
 import unicodedata
+from functools import lru_cache
 from typing import Any
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
@@ -15,6 +18,11 @@ MAX_CHARS = 3_000
 CHECK_MAX_CHARS = 12_000
 REWRITE_URL = "https://aismell-rewrite.brmcl.workers.dev/rewrite"
 CHECK_URL = "https://aismell-rewrite.brmcl.workers.dev/bibliography"
+
+# In-memory cache: avoids hitting the online service for identical inputs
+# within a short window. Keyed by (sha256(text), mode).
+_REWRITE_CACHE: dict[str, tuple[float, dict[str, Any]]] = {}
+CACHE_TTL = 60  # seconds
 
 
 def _post_json(url: str, payload: dict[str, str], timeout: int = 30) -> dict[str, Any] | None:
@@ -58,6 +66,12 @@ def rewrite_payload(text: str, mode: str = "clean") -> dict[str, object]:
     if len(text) > MAX_CHARS:
         return {"ok": False, "errorCode": "too-long"}
 
+    cache_key = hashlib.sha256(text.encode("utf-8")).hexdigest() + ":" + mode
+    now = time.monotonic()
+    cached = _REWRITE_CACHE.get(cache_key)
+    if cached and (now - cached[0]) < CACHE_TTL:
+        return cached[1]
+
     request_payload = {"text": text}
     if mode == "improve":
         request_payload["mode"] = "improve"
@@ -65,14 +79,17 @@ def rewrite_payload(text: str, mode: str = "clean") -> dict[str, object]:
     rewritten = result.get("text") if result else None
     changes = result.get("changes") if result else None
     if not isinstance(rewritten, str) or not rewritten.strip() or not isinstance(changes, list):
-        return {"ok": False, "errorCode": "rewrite-unavailable"}
-
-    return {
-        "ok": True,
-        "source": text,
-        "text": rewritten,
-        "changes": [item for item in changes if isinstance(item, str) and item.strip()][:12],
-    }
+        outcome = {"ok": False, "errorCode": "rewrite-unavailable"}
+    else:
+        outcome = {
+            "ok": True,
+            "source": text,
+            "text": rewritten,
+            "changes": [item for item in changes if isinstance(item, str) and item.strip()][:12],
+        }
+    if outcome.get("ok"):
+        _REWRITE_CACHE[cache_key] = (now, outcome)
+    return outcome
 
 
 def _normal_tokens(value: str) -> set[str]:

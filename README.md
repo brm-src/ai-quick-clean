@@ -27,6 +27,7 @@ It is deliberately not an AI detector bypass and it does not promise that a rewr
 - `Ctrl + Enter` runs the current mode without reaching for the mouse.
 - After copying, the `copy` button briefly shows `✓ copiado` / `✓ copied` as feedback.
 - A live character counter (`N/3000`) warns when the text approaches the limit.
+- Identical rewrites are cached for 60 seconds so re-running the same text is instant.
 
 ## Install
 

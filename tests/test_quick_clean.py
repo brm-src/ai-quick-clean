@@ -158,3 +158,21 @@ def test_checks_bibliography_received_on_standard_input(monkeypatch, capsys):
 
     payload = json.loads(capsys.readouterr().out)
     assert payload["report"]["score"] == 88
+
+
+def test_rewrite_cache_avoids_duplicate_service_calls(monkeypatch):
+    calls = {"count": 0}
+    quick_clean._REWRITE_CACHE.clear()
+
+    def fake_post(payload):
+        calls["count"] += 1
+        return {"text": "Cached result.", "changes": ["Trim filler."]}
+
+    monkeypatch.setattr(quick_clean, "_post_rewrite", fake_post)
+    monkeypatch.setattr(quick_clean.time, "monotonic", lambda: 0.0)
+
+    first = rewrite_payload("Some filler text to rewrite.")
+    second = rewrite_payload("Some filler text to rewrite.")
+
+    assert calls["count"] == 1
+    assert first == second
