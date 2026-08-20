@@ -13,6 +13,9 @@ Item {
   readonly property int cardWidth: Math.min(Style.space(560), panel.width - Style.gapsOut * 2)
   property bool opened: false
   property bool busy: false
+  property int requestId: 0
+  property int requestToken: 0
+  property var callback: null
   property bool hasResult: false
   property bool backdropReady: false
   property bool copiedFlash: false
@@ -108,7 +111,13 @@ Item {
   function runHelper(command, input, done) {
     if (root.busy) return
     root.busy = true
-    root.callback = done
+    root.requestId = (root.requestId || 0) + 1
+    root.requestToken = root.requestId
+    root.callback = function(payload) {
+      // Stale response from a superseded request: drop it.
+      if (root.requestToken !== root.requestId) return
+      done(payload)
+    }
     helper.inputText = String(input || "")
     helper.command = ["python3", root.helperPath, command]
     helper.running = true
