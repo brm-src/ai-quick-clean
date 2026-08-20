@@ -754,7 +754,7 @@ Item {
               id: cleanAction
               text: root.words("limpiar", "clean")
               selected: root.mode === "clean"
-              active: root.sourceText !== "" && !root.busy
+              active: !root.busy
               tooltipText: root.words("Quita el relleno de ia y mejora la redacción.", "Removes ai filler and improves wording.")
               onClicked: {
                 root.setMode("clean")
@@ -765,7 +765,7 @@ Item {
               id: improveAction
               text: root.words("mejorar", "improve")
               selected: root.mode === "improve"
-              active: root.sourceText !== "" && !root.busy
+              active: !root.busy
               tooltipText: root.words("Edición más visible: corta fórmulas, redundancias y tono institucional.", "More visible edit: cuts boilerplate, repetition, and institutional tone.")
               onClicked: {
                 root.setMode("improve")
