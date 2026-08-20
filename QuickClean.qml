@@ -724,7 +724,7 @@ Item {
 
             Item {
               id: actionSpacer
-              width: Math.max(0, parent.width - cleanAction.width - improveAction.width - checkAction.width - (copyAction.visible ? copyAction.width + parent.spacing : 0) - poweredBy.width - parent.spacing * 2)
+              width: Math.max(0, parent.width - cleanAction.width - improveAction.width - (copyAction.visible ? copyAction.width + parent.spacing : 0) - poweredBy.width - parent.spacing * 2)
               height: 1
             }
 
