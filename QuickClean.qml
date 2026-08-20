@@ -55,7 +55,7 @@ Item {
   readonly property var hints: ({
     clean: root.words("Pega un texto y presiona limpiar. Queda más directo y sin relleno.", "Paste some text and press clean. It gets more direct, without the padding."),
     improve: root.words("Pega un texto y presiona mejorar. Lo deja más claro y con mejor redacción.", "Paste some text and press improve. It gets clearer and better written."),
-    bibliography: root.words("Pega tu lista de referencias y presiona revisar bibliografía.", "Paste your reference list and press check bibliography.")
+    bibliography: root.words("Pega tu lista de referencias y presiona revisar bibliografía. Busca duplicados, entradas incompletas y coincidencias en Crossref y OpenAlex.", "Paste your reference list and press check bibliography. It looks for duplicates, incomplete entries, and matches on Crossref and OpenAlex.")
   })
 
   readonly property var idleHint: root.hints[root.mode]
@@ -333,21 +333,6 @@ Item {
                 font.pixelSize: Style.font.title
                 font.bold: true
               }
-              Text {
-                width: parent.width
-                text: root.mode === "bibliography"
-                  ? root.words(
-                      "Pega tu lista de referencias y elige revisar bibliografía. Busca coincidencias reales en Crossref y OpenAlex.",
-                      "Paste your reference list and pick check bibliography. It looks for real matches in Crossref and OpenAlex.")
-                  : root.words(
-                      "Pega un mensaje, correo o párrafo y elige limpiar o mejorar. El texto queda más directo y suena más humano.",
-                      "Paste a message, email, or paragraph and pick clean or improve. The text gets more direct and sounds more human.")
-                color: Color.menu.text
-                opacity: 0.66
-                font.family: Style.font.menuFamily
-                font.pixelSize: Style.font.bodySmall
-                wrapMode: Text.Wrap
-              }
             }
 
             Button {
@@ -415,7 +400,7 @@ Item {
 
           Row {
             width: parent.width
-            height: parent.height - y - actions.height - Style.spacing.md
+            height: Math.max(80, parent.height - y - actions.height - bibSeparator.height - bibRow.height - Style.spacing.md * 3)
             spacing: Style.spacing.md
 
             // BIBLIOGRAPHY MODE - single column
@@ -736,17 +721,6 @@ Item {
                 if (root.sourceText !== "") root.cleanText("improve")
               }
             }
-            Button {
-              id: checkAction
-              text: root.words("revisar bibliografía", "check bibliography")
-              selected: root.mode === "bibliography"
-              active: root.sourceText.trim() !== "" && !root.busy
-              tooltipText: root.words("Busca coincidencias y revisa la estructura.", "Searches for matches and reviews structure.")
-              onClicked: {
-                root.setMode("bibliography")
-                if (root.sourceText.trim() !== "") root.checkBibliography()
-              }
-            }
 
             Item {
               id: actionSpacer
@@ -783,6 +757,33 @@ Item {
                 anchors.fill: poweredByLabel
                 cursorShape: Qt.PointingHandCursor
                 onClicked: Qt.openUrlExternally("https://aismell.me")
+              }
+            }
+          }
+
+          Rectangle {
+            id: bibSeparator
+            width: parent.width
+            height: 1
+            color: Color.menu.text
+            opacity: 0.12
+          }
+
+          Row {
+            id: bibRow
+            width: parent.width
+            spacing: Style.spacing.sm
+
+            Button {
+              id: checkAction
+              text: root.words("revisar bibliografía", "check bibliography")
+              selected: root.mode === "bibliography"
+              active: root.sourceText.trim() !== "" && !root.busy
+              fontSize: Style.font.bodySmall
+              tooltipText: root.words("Busca duplicados, entradas incompletas y coincidencias en Crossref y OpenAlex.", "Looks for duplicates, incomplete entries, and matches on Crossref and OpenAlex.")
+              onClicked: {
+                root.setMode("bibliography")
+                if (root.sourceText.trim() !== "") root.checkBibliography()
               }
             }
           }
