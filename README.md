@@ -23,6 +23,7 @@ It is deliberately not an AI detector bypass and it does not promise that a rewr
 - Shows the original and proposed text side by side for clean/improve; single editor + results for bibliography.
 - Shows an indeterminate progress bar while the online service is working.
 - Reports how many edits were returned and lists the first three explanations.
+- Uses the latest aismell evidence index to guide improve mode: uniform rhythm, distant narration, stacked absolutes, and other structural signals become editing guidance instead of a generic rewrite request. The index is an editorial cue, not an authorship verdict.
 - Never replaces the focused application's text automatically. You must press `copy`.
 - `Ctrl + Enter` runs the current mode without reaching for the mouse.
 - After copying, the `copy` button briefly shows `✓ copiado` / `✓ copied` as feedback.
@@ -82,9 +83,9 @@ See [PRIVACY.md](PRIVACY.md) for the full data-flow notes.
 
 ### Clean / Improve
 1. `quick_clean.py` reads the selected text locally and enforces the 3,000-character limit.
-2. The Worker sends the text to the aismell analyzer for language and signal evidence.
-3. The Worker chooses the conservative `clean` prompt or the stronger `improve` prompt.
-4. Workers AI returns one proposed text and short change explanations as JSON.
+2. The Worker sends the text to the aismell analyzer for language, evidence index, score components, statistical profile, and high-confidence findings.
+3. The Worker chooses the conservative `clean` prompt or the stronger `improve` prompt; improve receives the structural guidance when it exists.
+4. Workers AI returns one proposed text and short change explanations as JSON, together with the in-memory guidance summary.
 5. The panel keeps the response in memory and never copies it until you press `copy`.
 
 ### Bibliography

@@ -23,6 +23,7 @@ No es una herramienta para evadir detectores de ia ni promete que una reescritur
 - Muestra el texto original y la propuesta lado a lado en limpiar/mejorar; editor único + resultados en bibliografía.
 - Muestra una barra de progreso indeterminada mientras trabaja el servicio online.
 - Informa cuántos cambios devolvió y muestra las tres primeras explicaciones.
+- Usa el nuevo índice de señales de aismell para orientar el modo **mejorar**: ritmo demasiado uniforme, narrador distante, absolutos acumulados y otras señales estructurales se convierten en indicaciones de edición, no en una reescritura genérica. El índice es una guía editorial, no un veredicto de autoría.
 - Nunca reemplaza automáticamente el texto de la aplicación activa. Debes presionar `copiar`.
 
 ## Instalación
@@ -78,9 +79,9 @@ Consulta [PRIVACY.md](PRIVACY.md) para ver el flujo completo de datos.
 
 ### Limpiar / Mejorar
 1. `quick_clean.py` lee localmente el texto seleccionado y aplica el límite de 3.000 caracteres.
-2. El Worker envía el texto al analizador de aismell para obtener idioma y señales.
-3. El Worker elige el prompt conservador de `clean` o el prompt más fuerte de `improve`.
-4. Workers AI devuelve una propuesta y explicaciones breves en JSON.
+2. El Worker envía el texto al analizador de aismell para obtener idioma, índice de señales, componentes del puntaje, perfil estadístico y hallazgos de alta confianza.
+3. El Worker elige el prompt conservador de `clean` o el prompt más fuerte de `improve`; `improve` recibe la guía estructural cuando existe.
+4. Workers AI devuelve una propuesta y explicaciones breves en JSON, junto con el resumen de guía en memoria.
 5. El panel mantiene la respuesta en memoria y no la copia hasta que presionas `copiar`.
 
 ### Bibliografía

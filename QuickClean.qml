@@ -25,6 +25,7 @@ Item {
   property string cleanedText: ""
   property var changes: []
   property var report: ({})
+  property var analysis: ({})
   property string status: ""
 
   function words(es, en) { return root.isSpanish ? es : en }
@@ -70,6 +71,7 @@ Item {
     root.cleanedText = ""
     root.changes = []
     root.report = ({})
+    root.analysis = ({})
     root.status = root.idleHint
     if (newMode === "clean" || newMode === "improve") {
       root.runHelper("read-clipboard", "", function(payload) {
@@ -86,6 +88,7 @@ Item {
     root.cleanedText = ""
     root.changes = []
     root.report = ({})
+    root.analysis = ({})
     root.status = root.idleHint
     if (root.mode === "clean" || root.mode === "improve") {
       root.runHelper("read-clipboard", "", function(payload) {
@@ -140,6 +143,16 @@ Item {
     return root.changes.slice(0, 3).map(function(item) { return "• " + String(item) }).join("\n")
   }
 
+  function analysisSummary() {
+    var score = root.analysis && root.analysis.score !== undefined ? Number(root.analysis.score) : NaN
+    var count = root.analysis && root.analysis.findingCount !== undefined ? Number(root.analysis.findingCount) : 0
+    if (!isFinite(score)) return ""
+    return root.words(
+      "Guía de edición: " + Math.round(score) + "/100 · " + count + " señales. No es una prueba de autoría.",
+      "Editing guidance: " + Math.round(score) + "/100 · " + count + " signals. Not proof of authorship."
+    )
+  }
+
   function cleanText(mode) {
     mode = mode === "improve" ? "improve" : "clean"
     if (!root.sourceText.trim()) {
@@ -154,12 +167,14 @@ Item {
         root.hasResult = false
         root.cleanedText = ""
         root.changes = []
+        root.analysis = ({})
         root.status = root.errorText(payload)
         return
       }
       root.sourceText = String(payload.source || "")
       root.cleanedText = String(payload.text || "")
       root.changes = payload.changes || []
+      root.analysis = payload.analysis || ({})
       root.hasResult = true
       root.status = root.changes.length > 0
         ? root.words("Listo · " + root.changes.length + " cambios. Compara y copia si te gusta.", "Done · " + root.changes.length + " changes. Compare it and copy if you like it.")
@@ -431,6 +446,18 @@ Item {
             elide: Text.ElideRight
           }
 
+          Text {
+            textFormat: Text.PlainText
+            width: parent.width
+            visible: root.mode !== "bibliography" && root.hasResult && root.analysis && root.analysis.score !== undefined
+            text: root.analysisSummary()
+            color: Color.menu.text
+            opacity: 0.5
+            font.family: Style.font.menuFamily
+            font.pixelSize: Style.font.caption
+            wrapMode: Text.Wrap
+          }
+
           Row {
             width: parent.width
             height: Math.max(80, parent.height - y - actions.height - bibSeparator.height - bibRow.height - Style.spacing.md * 3)
@@ -472,6 +499,7 @@ Item {
                       root.sourceText = text
                       root.hasResult = false
                       root.report = ({})
+                      root.analysis = ({})
                       root.status = root.idleHint
                     }
                   }
@@ -654,6 +682,7 @@ Item {
                         root.hasResult = false
                         root.cleanedText = ""
                         root.changes = []
+                        root.analysis = ({})
                         root.status = root.idleHint
                       }
                     })
@@ -698,6 +727,7 @@ Item {
                         root.hasResult = false
                         root.cleanedText = ""
                         root.changes = []
+                        root.analysis = ({})
                         root.status = root.idleHint
                       }
                     }

@@ -48,6 +48,24 @@ def test_sends_improve_mode_to_the_public_service(monkeypatch):
     assert sent == {"text": "It is important to note that the report is ready.", "mode": "improve"}
 
 
+def test_preserves_aismell_guidance_with_the_rewrite_result(monkeypatch):
+    quick_clean._REWRITE_CACHE.clear()
+    analysis = {
+        "score": 42,
+        "scoreComponents": {"statistical": 0.18},
+        "stats": {"burstiness": 0.21},
+        "findingCount": 2,
+    }
+    monkeypatch.setattr(
+        quick_clean,
+        "_post_rewrite",
+        lambda payload: {"text": "The report is ready.", "changes": ["Cut boilerplate."], "analysis": analysis},
+    )
+
+    result = rewrite_payload("It is important to note that the report is ready.")
+
+    assert result["analysis"] == analysis
+
 def test_does_not_claim_success_when_the_rewrite_service_is_unavailable(monkeypatch):
     monkeypatch.setattr(quick_clean, "_post_rewrite", lambda payload: None)
 

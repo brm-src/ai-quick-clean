@@ -87,6 +87,9 @@ def rewrite_payload(text: str, mode: str = "clean") -> dict[str, object]:
             "text": rewritten,
             "changes": [item for item in changes if isinstance(item, str) and item.strip()][:12],
         }
+        analysis = result.get("analysis") if result else None
+        if isinstance(analysis, dict):
+            outcome["analysis"] = analysis
     if outcome.get("ok"):
         _REWRITE_CACHE[cache_key] = (now, outcome)
     return outcome
