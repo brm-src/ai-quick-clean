@@ -739,7 +739,7 @@ Item {
             }
             Item {
               id: poweredBy
-              width: Style.space(150)
+              width: Style.space(160)
               height: parent.height
 
               Text {
@@ -754,9 +754,9 @@ Item {
               }
 
               MouseArea {
-                anchors.fill: poweredByLabel
+                anchors.fill: parent
                 cursorShape: Qt.PointingHandCursor
-                onClicked: Qt.openUrlExternally("https://aismell.me")
+                onClicked: Quickshell.execDetached(["xdg-open", "https://aismell.me"])
               }
             }
           }
