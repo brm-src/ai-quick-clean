@@ -15,6 +15,7 @@ Item {
   property bool busy: false
   property bool hasResult: false
   property bool backdropReady: false
+  property bool copiedFlash: false
   property string uiLanguage: Qt.locale().name.toLowerCase().startsWith("es") ? "es" : "en"
   property string mode: "clean"  // clean, improve, bibliography
   property string sourceText: ""
@@ -182,6 +183,10 @@ Item {
       root.status = payload.ok
         ? root.words("Copiado. Ya puedes pegarlo.", "Copied. You can paste it now.")
         : root.errorText(payload)
+      if (payload.ok) {
+        root.copiedFlash = true
+        copiedFlashTimer.restart()
+      }
     })
   }
 
@@ -261,6 +266,13 @@ Item {
     onTriggered: root.backdropReady = true
   }
 
+  Timer {
+    id: copiedFlashTimer
+    interval: 1600
+    repeat: false
+    onTriggered: root.copiedFlash = false
+  }
+
   PanelWindow {
     id: panel
     screen: Quickshell.screens[0]
@@ -307,6 +319,11 @@ Item {
         color: Color.menu.background
         borderSpec: Border.surfaceSpec("menu", "border", Color.menu.border, Math.max(1, Style.space(2)))
         padding: Style.spacing.panelPadding
+        scale: 1
+        opacity: 1
+        Behavior on scale { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        Behavior on opacity { NumberAnimation { duration: 150; easing.type: Easing.OutCubic } }
+        onVisibleChanged: { if (visible) { scale = 0.97; opacity = 0; Qt.callLater(function() { scale = 1; opacity = 1 }) } }
 
         MouseArea { anchors.fill: parent }
 
@@ -577,13 +594,40 @@ Item {
                 anchors.bottomMargin: parent.contentBottomInset
                 anchors.leftMargin: parent.contentLeftInset
                 spacing: Style.spacing.sm
-                Text {
-                  text: root.words("tu texto", "your text")
-                  color: Color.menu.text
-                  opacity: 0.56
-                  font.family: Style.font.menuFamily
-                  font.pixelSize: Style.font.bodySmall
-                  font.bold: true
+                Row {
+                  width: parent.width
+                  Text {
+                    text: root.words("tu texto", "your text")
+                    color: Color.menu.text
+                    opacity: 0.56
+                    font.family: Style.font.menuFamily
+                    font.pixelSize: Style.font.bodySmall
+                    font.bold: true
+                  }
+                  Item { width: parent.width - pasteButton.width - charCount.width; height: 1 }
+                  Text {
+                    id: charCount
+                    text: String(root.sourceText.length) + "/3000"
+                    color: root.sourceText.length > 2800 ? Color.urgent : (root.sourceText.length > 2500 ? Color.accent : Color.menu.text)
+                    opacity: root.sourceText.length > 2500 ? 0.9 : 0.5
+                    font.family: Style.font.menuFamily
+                    font.pixelSize: Style.font.bodySmall
+                  }
+                  PanelActionButton {
+                    id: pasteButton
+                    iconText: "📋"
+                    tooltipText: root.words("Pegar del portapapeles", "Paste from clipboard")
+                    foreground: Color.menu.text
+                    onClicked: root.runHelper("read-clipboard", "", function(payload) {
+                      if (payload.ok && String(payload.source || "").trim() !== "") {
+                        root.sourceText = String(payload.source)
+                        root.hasResult = false
+                        root.cleanedText = ""
+                        root.changes = []
+                        root.status = root.idleHint
+                      }
+                    })
+                  }
                 }
                 Flickable {
                   id: sourceScroll
@@ -619,6 +663,13 @@ Item {
                         root.cleanedText = ""
                         root.changes = []
                         root.status = root.idleHint
+                      }
+                    }
+                    Keys.onPressed: function(event) {
+                      if (event.key === Qt.Key_Return && (event.modifiers & Qt.ControlModifier)) {
+                        if (root.mode === "bibliography") root.checkBibliography()
+                        else root.cleanText(root.mode)
+                        event.accepted = true
                       }
                     }
                     Text {
@@ -733,7 +784,7 @@ Item {
               visible: root.mode !== "bibliography" && root.hasResult && root.cleanedText !== ""
               selected: true
               active: !root.busy
-              text: root.words("copiar", "copy")
+              text: root.copiedFlash ? root.words("✓ copiado", "✓ copied") : root.words("copiar", "copy")
               tooltipText: root.words("Copia la versión limpia al portapapeles.", "Copy the cleaned version to the clipboard.")
               onClicked: root.copyCleanText()
             }

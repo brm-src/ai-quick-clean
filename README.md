@@ -15,7 +15,7 @@ It is deliberately not an AI detector bypass and it does not promise that a rewr
 ## What it does
 
 - Works with English and Spanish messages, emails, and short paragraphs up to 3,000 characters (12,000 for bibliographies).
-- Reads the Wayland primary selection first, then the regular clipboard, to prefill the editor.
+- Reads the Wayland primary selection first, then the regular clipboard, to prefill the editor. A **📋 paste** button is also available to pull a fresh clipboard into the editor.
 - Three modes:
   - **limpiar** — removes high-confidence filler and improves wording in one pass.
   - **mejorar** — more visible edit: cuts ceremonial openings, institutional boilerplate, repetition, abstract phrasing, and inflated adjectives while preserving facts and intent.
@@ -24,6 +24,9 @@ It is deliberately not an AI detector bypass and it does not promise that a rewr
 - Shows an indeterminate progress bar while the online service is working.
 - Reports how many edits were returned and lists the first three explanations.
 - Never replaces the focused application's text automatically. You must press `copy`.
+- `Ctrl + Enter` runs the current mode without reaching for the mouse.
+- After copying, the `copy` button briefly shows `✓ copiado` / `✓ copied` as feedback.
+- A live character counter (`N/3000`) warns when the text approaches the limit.
 
 ## Install
 
@@ -53,12 +56,12 @@ omarchy plugin remove io.github.brm-src.ai-quick-clean --yes
 
 ## Use
 
-1. Copy or select a short draft, then open **ai quick clean** from the bar.
-2. Choose the mode at the top: **limpiar**, **mejorar**, or **bibliografía**.
-3. Edit the text if needed.
-4. Press the action button for the chosen mode (`limpiar` / `mejorar` / `revisar`).
+1. Copy or select a short draft, then open **ai quick clean** from the bar. The editor is prefilled from the clipboard; press 📋 if you need to re-paste.
+2. Choose the mode at the bottom of the card: **limpiar**, **mejorar**, or **revisar bibliografía**.
+3. Edit the text if needed. The counter warns when you near 3,000 characters.
+4. Press the action button for the chosen mode, or press `Ctrl + Enter` to run it directly.
 5. Wait for the progress bar to finish and read the change explanations or bibliography report.
-6. For clean/improve: compare both columns and press `copy` only if you want the proposed version in the clipboard.
+6. For clean/improve: compare both columns and press `copy` only if you want the proposed version in the clipboard. The button briefly confirms `✓ copiado`.
 
 Press `Escape`, `Super + W`, or click outside the card to close it. The `powered by: aismell.me` footer opens the project site.
 
