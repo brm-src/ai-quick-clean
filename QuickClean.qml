@@ -26,7 +26,6 @@ Item {
   property var changes: []
   property var report: ({})
   property string status: ""
-  property var callback: null
 
   function words(es, en) { return root.isSpanish ? es : en }
 
@@ -660,6 +659,12 @@ Item {
                     textFormat: TextEdit.PlainText
                     Keys.onEscapePressed: root.close()
                     Keys.onPressed: function(event) {
+                      if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && (event.modifiers & Qt.ControlModifier)) {
+                        if (root.mode === "bibliography") root.checkBibliography()
+                        else root.cleanText(root.mode)
+                        event.accepted = true
+                        return
+                      }
                       if (event.key === Qt.Key_W && (event.modifiers & Qt.MetaModifier)) {
                         root.close()
                         event.accepted = true
@@ -672,13 +677,6 @@ Item {
                         root.cleanedText = ""
                         root.changes = []
                         root.status = root.idleHint
-                      }
-                    }
-                    Keys.onPressed: function(event) {
-                      if (event.key === Qt.Key_Return && (event.modifiers & Qt.ControlModifier)) {
-                        if (root.mode === "bibliography") root.checkBibliography()
-                        else root.cleanText(root.mode)
-                        event.accepted = true
                       }
                     }
                     Text {
