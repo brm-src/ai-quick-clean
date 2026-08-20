@@ -3,5 +3,3 @@ __pycache__/
 .pytest_cache/
 .venv/
 .DS_Store
-# Local QML loader experiment; the plugin entry point is QuickClean.qml.
-Main.qml
