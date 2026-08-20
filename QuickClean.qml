@@ -46,17 +46,17 @@ Item {
     }
   }
 
-  readonly property var titles: {
+  readonly property var titles: ({
     clean: root.words("Quitar palabrería de ia", "strip ai waffle"),
     improve: root.words("Mejorar redacción", "improve wording"),
     bibliography: root.words("Revisar bibliografía", "check bibliography")
-  }
+  })
 
-  readonly property var hints: {
+  readonly property var hints: ({
     clean: root.words("Pega tu texto y presiona limpiar.", "Paste your text and press clean."),
     improve: root.words("Pega tu texto y presiona mejorar.", "Paste your text and press improve."),
     bibliography: root.words("Pega una bibliografía y presiona revisar.", "Paste a bibliography and press check.")
-  }
+  })
 
   readonly property var idleHint: root.hints[root.mode]
 
@@ -526,7 +526,7 @@ Item {
 
                     Text {
                       width: parent.width
-                      visible: root.report.analysis && root.report.analysis.truncated
+                      visible: Boolean(root.report && root.report.analysis && root.report.analysis.truncated)
                       text: root.words("El análisis lingüístico cubre los primeros 3.000 caracteres; las comprobaciones estructurales cubren todo el texto.", "Linguistic analysis covers the first 3,000 characters; structural checks cover the full text.")
                       color: Color.menu.text
                       opacity: 0.58
@@ -803,4 +803,3 @@ Item {
       }
     }
   }
-}
