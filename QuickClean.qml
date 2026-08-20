@@ -198,6 +198,11 @@ Item {
     })
   }
 
+  function safeScholarUrl(value) {
+    var url = String(value || "").trim()
+    return /^https:\/\/scholar\.google\.com(?:\/|$)/.test(url) ? url : ""
+  }
+
   function lookupLabel(item) {
     var status = item.status === "found"
       ? root.words("encontrada", "found")
@@ -211,7 +216,7 @@ Item {
     var responded = (item.sources || []).filter(function(source) { return source.status === "responded" && (!item.match || source.source !== item.match.source) }).map(function(source) { return source.source })
     if (unavailable.length) source += root.words(" · " + unavailable.join(" + ") + " no disponible", " · " + unavailable.join(" + ") + " unavailable")
     if (responded.length) source += root.words(" · " + responded.join(" + ") + " respondió", " · " + responded.join(" + ") + " responded")
-    return root.words("Entrada ", "Entry ") + item.entry + " · " + status + " · " + source + (item.scholarUrl ? " · Google Scholar ↗" : "")
+    return root.words("Entrada ", "Entry ") + item.entry + " · " + status + " · " + source + (root.safeScholarUrl(item.scholarUrl) ? " · Google Scholar ↗" : "")
   }
 
   function statusLabel() {
@@ -571,9 +576,9 @@ Item {
                         }
                         MouseArea {
                           anchors.fill: parent
-                          enabled: modelData.scholarUrl !== ""
+                          enabled: root.safeScholarUrl(modelData.scholarUrl) !== ""
                           cursorShape: Qt.PointingHandCursor
-                          onClicked: Qt.openUrlExternally(modelData.scholarUrl)
+                          onClicked: Qt.openUrlExternally(root.safeScholarUrl(modelData.scholarUrl))
                         }
                       }
                     }
