@@ -47,15 +47,15 @@ Item {
   }
 
   readonly property var titles: ({
-    clean: root.words("Quitar palabrería de ia", "strip ai waffle"),
-    improve: root.words("Mejorar redacción", "improve wording"),
-    bibliography: root.words("Revisar bibliografía", "check bibliography")
+    clean: root.words("ai quick clean", "ai quick clean"),
+    improve: root.words("ai quick clean", "ai quick clean"),
+    bibliography: root.words("revisar bibliografía", "check bibliography")
   })
 
   readonly property var hints: ({
-    clean: root.words("Pega tu texto y presiona limpiar.", "Paste your text and press clean."),
-    improve: root.words("Pega tu texto y presiona mejorar.", "Paste your text and press improve."),
-    bibliography: root.words("Pega una bibliografía y presiona revisar.", "Paste a bibliography and press check.")
+    clean: root.words("Pega un texto y presiona limpiar. Queda más directo y sin relleno.", "Paste some text and press clean. It gets more direct, without the padding."),
+    improve: root.words("Pega un texto y presiona mejorar. Lo deja más claro y con mejor redacción.", "Paste some text and press improve. It gets clearer and better written."),
+    bibliography: root.words("Pega tu lista de referencias y presiona revisar bibliografía.", "Paste your reference list and press check bibliography.")
   })
 
   readonly property var idleHint: root.hints[root.mode]
@@ -324,7 +324,7 @@ Item {
 
             Column {
               id: titleColumn
-              width: parent.width - modeSelector.width - closeButton.width - Style.spacing.md * 2
+              width: parent.width - closeButton.width - Style.spacing.md
               spacing: Style.spacing.xs
               Text {
                 text: root.titles[root.mode]
@@ -337,29 +337,17 @@ Item {
                 width: parent.width
                 text: root.mode === "bibliography"
                   ? root.words(
-                      "Pega una bibliografía (una entrada por línea). Busca en Crossref y OpenAlex, detecta duplicados, estructura y fechas.",
-                      "Paste a bibliography (one entry per line). Searches Crossref and OpenAlex, detects duplicates, structure, and dates.")
+                      "Pega tu lista de referencias y elige revisar bibliografía. Busca coincidencias reales en Crossref y OpenAlex.",
+                      "Paste your reference list and pick check bibliography. It looks for real matches in Crossref and OpenAlex.")
                   : root.words(
-                      "Le saca el relleno que suena a texto escrito por ia: frases de trámite, fórmulas repetidas y adjetivos de más. Conserva el mensaje, nombres, links y datos.",
-                      "Removes the padding that makes text sound ai-written: stock phrases, repeated formulas, and extra adjectives. Keeps your message, names, links, and numbers.")
+                      "Pega un mensaje, correo o párrafo y elige limpiar o mejorar. El texto queda más directo y suena más humano.",
+                      "Paste a message, email, or paragraph and pick clean or improve. The text gets more direct and sounds more human.")
                 color: Color.menu.text
                 opacity: 0.66
                 font.family: Style.font.menuFamily
                 font.pixelSize: Style.font.bodySmall
                 wrapMode: Text.Wrap
               }
-            }
-
-            ButtonGroup {
-              id: modeSelector
-              anchors.verticalCenter: parent.verticalCenter
-              options: [
-                { value: "clean", label: root.words("limpiar", "clean"), tooltip: root.words("Quita el relleno de ia y mejora la redacción.", "Removes ai filler and improves wording.") },
-                { value: "improve", label: root.words("mejorar", "improve"), tooltip: root.words("Edición más visible: corta fórmulas, redundancias y tono institucional.", "More visible edit: cuts boilerplate, repetition, and institutional tone.") },
-                { value: "bibliography", label: root.words("bibliografía", "bibliography"), tooltip: root.words("Revisa referencias contra Crossref y OpenAlex.", "Checks references against Crossref and OpenAlex.") }
-              ]
-              value: root.mode
-              onChanged: root.setMode(value)
             }
 
             Button {
@@ -728,39 +716,44 @@ Item {
 
             Button {
               id: cleanAction
-              visible: root.mode === "clean"
               text: root.words("limpiar", "clean")
-              selected: !root.hasResult
+              selected: root.mode === "clean"
               active: root.sourceText !== "" && !root.busy
               tooltipText: root.words("Quita el relleno de ia y mejora la redacción.", "Removes ai filler and improves wording.")
-              onClicked: root.cleanText("clean")
+              onClicked: {
+                root.setMode("clean")
+                if (root.sourceText !== "") root.cleanText("clean")
+              }
             }
             Button {
               id: improveAction
-              visible: root.mode === "improve"
               text: root.words("mejorar", "improve")
-              selected: !root.hasResult
+              selected: root.mode === "improve"
               active: root.sourceText !== "" && !root.busy
               tooltipText: root.words("Edición más visible: corta fórmulas, redundancias y tono institucional.", "More visible edit: cuts boilerplate, repetition, and institutional tone.")
-              onClicked: root.cleanText("improve")
+              onClicked: {
+                root.setMode("improve")
+                if (root.sourceText !== "") root.cleanText("improve")
+              }
             }
             Button {
               id: checkAction
-              visible: root.mode === "bibliography"
-              text: root.words("revisar", "check")
-              selected: !root.hasResult
+              text: root.words("revisar bibliografía", "check bibliography")
+              selected: root.mode === "bibliography"
               active: root.sourceText.trim() !== "" && !root.busy
               tooltipText: root.words("Busca coincidencias y revisa la estructura.", "Searches for matches and reviews structure.")
-              onClicked: root.checkBibliography()
+              onClicked: {
+                root.setMode("bibliography")
+                if (root.sourceText.trim() !== "") root.checkBibliography()
+              }
             }
-            Button {
-              id: clearAction
-              visible: root.mode === "bibliography"
-              text: root.words("limpiar", "clear")
-              selected: false
-              active: !root.busy
-              onClicked: { root.sourceText = ""; root.hasResult = false; root.report = ({}); root.status = root.idleHint }
+
+            Item {
+              id: actionSpacer
+              width: Math.max(0, parent.width - cleanAction.width - improveAction.width - checkAction.width - (copyAction.visible ? copyAction.width + parent.spacing : 0) - poweredBy.width - parent.spacing * 2)
+              height: 1
             }
+
             Button {
               id: copyAction
               visible: root.mode !== "bibliography" && root.hasResult && root.cleanedText !== ""
@@ -769,11 +762,6 @@ Item {
               text: root.words("copiar", "copy")
               tooltipText: root.words("Copia la versión limpia al portapapeles.", "Copy the cleaned version to the clipboard.")
               onClicked: root.copyCleanText()
-            }
-            Item {
-              id: actionSpacer
-              width: Math.max(0, parent.width - cleanAction.width - improveAction.width - checkAction.width - clearAction.width - (copyAction.visible ? copyAction.width + parent.spacing : 0) - poweredBy.width - parent.spacing * 2)
-              height: 1
             }
             Item {
               id: poweredBy

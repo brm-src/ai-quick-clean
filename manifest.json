@@ -5,7 +5,7 @@
   "version": "1.1.0",
   "author": "Cris",
   "homepage": "https://aismell.me",
-  "description": "Quitar la palabrería de ia, mejorar la redacción y revisar bibliografías en español o inglés.",
+  "description": "Limpia o mejora un texto corto, o revisa una bibliografía, en español o inglés.",
   "kinds": ["panel", "bar-widget"],
   "keepLoaded": true,
   "entryPoints": {
@@ -14,7 +14,7 @@
   },
   "barWidget": {
     "displayName": "ai quick clean",
-    "description": "Quita la palabrería de ia a un texto corto.",
+    "description": "Limpia o mejora un texto corto, o revisa una bibliografía.",
     "category": "Plugin",
     "defaultSection": "right",
     "allowMultiple": false

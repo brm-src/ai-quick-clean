@@ -12,7 +12,7 @@ BarIconButton {
   opticalSize: 16
   fontSize: 12
   text: "\uf040"
-  tooltipText: root.isSpanish ? "Quitar palabrería de ia" : "strip ai waffle"
+  tooltipText: root.isSpanish ? "ai quick clean · limpiar o mejorar texto, revisar bibliografía" : "ai quick clean · clean or improve text, check bibliography"
   readonly property bool isSpanish: Qt.locale().name.toLowerCase().startsWith("es")
 
   onPressed: function(button) {
