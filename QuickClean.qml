@@ -605,6 +605,7 @@ Item {
                 Row {
                   width: parent.width
                   Text {
+                    id: sourceLabel
                     text: root.words("tu texto", "your text")
                     color: Color.menu.text
                     opacity: 0.56
@@ -612,7 +613,10 @@ Item {
                     font.pixelSize: Style.font.bodySmall
                     font.bold: true
                   }
-                  Item { width: parent.width - pasteButton.width - charCount.width; height: 1 }
+                  Item {
+                    width: Math.max(0, parent.width - sourceLabel.implicitWidth - pasteButton.width - charCount.width)
+                    height: 1
+                  }
                   Text {
                     id: charCount
                     text: String(root.sourceText.length) + "/3000"
