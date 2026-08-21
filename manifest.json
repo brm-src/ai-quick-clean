@@ -5,7 +5,7 @@
   "version": "1.5.0",
   "author": "Cris",
   "homepage": "https://aismell.me",
-  "description": "Limpia o mejora un texto corto, o revisa una bibliografía, en español o inglés.",
+  "description": "Clean or improve short text, or check a bibliography, in English or Spanish.",
   "kinds": ["panel", "bar-widget"],
   "keepLoaded": true,
   "entryPoints": {
@@ -14,7 +14,7 @@
   },
   "barWidget": {
     "displayName": "ai quick clean",
-    "description": "Limpia o mejora un texto corto, o revisa una bibliografía.",
+    "description": "Clean or improve short text, or check a bibliography.",
     "category": "Plugin",
     "defaultSection": "right",
     "allowMultiple": false

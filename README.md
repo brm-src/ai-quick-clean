@@ -8,9 +8,9 @@
 
 ![ai quick clean preview](preview.png)
 
-A bilingual Omarchy / Quickshell panel for cleaning AI-drafted text, improving wording, and checking bibliographies. It keeps the original editable, shows the proposed version beside it, reports the edits, and lets you copy only when you approve them.
+A bilingual Omarchy / Quickshell panel for cleaning ai-drafted text, improving wording, and checking bibliographies. It keeps the original editable, shows the proposed version beside it, reports the edits, and lets you copy only when you approve them.
 
-It is deliberately not an AI detector bypass and it does not promise that a rewrite will evade any detector. It is a writing editor.
+It is deliberately not an ai detector bypass and it does not promise that a rewrite will evade any detector. It is a writing editor.
 
 ## What it does
 

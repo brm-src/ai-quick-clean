@@ -11,43 +11,42 @@
   <circle cx="1370" cy="110" r="310" fill="#E0228F" fill-opacity=".11"/>
   <circle cx="120" cy="930" r="240" fill="#E0228F" fill-opacity=".07"/>
   <text x="100" y="112" fill="#F7F5F7" font-family="sans-serif" font-size="46" font-weight="700">ai quick clean</text>
-  <text x="100" y="164" fill="#B7B1B7" font-family="sans-serif" font-size="25">limpia palabrería de ia · mejora redacción · revisa bibliografía</text>
+  <text x="100" y="164" fill="#B7B1B7" font-family="sans-serif" font-size="25">remove ai filler · improve wording · check bibliographies</text>
   <g filter="url(#shadow)">
     <rect x="300" y="220" width="1000" height="570" rx="16" fill="#1A181C" stroke="#4E4750" stroke-width="2"/>
     <text x="350" y="292" fill="#F7F5F7" font-family="sans-serif" font-size="31" font-weight="700">ai quick clean</text>
-    <text x="350" y="325" fill="#B7B1B7" font-family="sans-serif" font-size="18">Limpia o mejora un texto corto, o revisa una bibliografía, en español o inglés.</text>
+    <text x="350" y="325" fill="#B7B1B7" font-family="sans-serif" font-size="18">Clean or improve short text, or check a bibliography in English or Spanish.</text>
     
     <text x="1250" y="295" fill="#E5DFE5" font-family="sans-serif" font-size="30">×</text>
     <rect x="350" y="350" width="900" height="1" fill="#4E4750"/>
     
-    <text x="350" y="388" fill="#DED8DE" font-family="sans-serif" font-size="21">Limpio · 7 cambios detectados</text>
+    <text x="350" y="388" fill="#DED8DE" font-family="sans-serif" font-size="21">Clean · 7 changes returned</text>
     
     <rect x="350" y="420" width="432" height="190" rx="11" fill="#242126" stroke="#4E4750"/>
-    <text x="377" y="458" fill="#A8A1A8" font-family="sans-serif" font-size="16" font-weight="700">TU TEXTO</text>
-    <text x="377" y="502" fill="#DFD9DF" font-family="sans-serif" font-size="20">Junto con saludarles cordialmente,</text>
-    <text x="377" y="533" fill="#DFD9DF" font-family="sans-serif" font-size="20">queremos darles una cálida bienvenida</text>
-    <text x="377" y="564" fill="#DFD9DF" font-family="sans-serif" font-size="20">a este nuevo proceso formativo.</text>
+    <text x="377" y="458" fill="#A8A1A8" font-family="sans-serif" font-size="16" font-weight="700">YOUR TEXT</text>
+    <text x="377" y="502" fill="#DFD9DF" font-family="sans-serif" font-size="20">We are pleased to welcome you</text>
+    <text x="377" y="533" fill="#DFD9DF" font-family="sans-serif" font-size="20">to this new training process.</text>
     
     <rect x="818" y="420" width="432" height="190" rx="11" fill="#35152C" stroke="#E0228F" stroke-width="2"/>
-    <text x="845" y="458" fill="#FFD1EB" font-family="sans-serif" font-size="16" font-weight="700">RESULTADO</text>
-    <text x="845" y="502" fill="#FFF6FC" font-family="sans-serif" font-size="20">Queremos darles una cálida bienvenida</text>
-    <text x="845" y="533" fill="#FFF6FC" font-family="sans-serif" font-size="20">a este nuevo proceso formativo.</text>
+    <text x="845" y="458" fill="#FFD1EB" font-family="sans-serif" font-size="16" font-weight="700">RESULT</text>
+    <text x="845" y="502" fill="#FFF6FC" font-family="sans-serif" font-size="20">We are pleased to welcome you</text>
+    <text x="845" y="533" fill="#FFF6FC" font-family="sans-serif" font-size="20">to this new training process.</text>
     
     <rect x="350" y="640" width="130" height="54" rx="10" fill="#252227" stroke="#4E4750"/>
-    <text x="382" y="674" fill="#DED8DE" font-family="sans-serif" font-size="17">limpiar</text>
+    <text x="382" y="674" fill="#DED8DE" font-family="sans-serif" font-size="17">clean</text>
     
     <rect x="495" y="640" width="140" height="54" rx="10" fill="#252227" stroke="#E0228F"/>
-    <text x="522" y="674" fill="#FFD1EB" font-family="sans-serif" font-size="17">mejorar</text>
+    <text x="522" y="674" fill="#FFD1EB" font-family="sans-serif" font-size="17">improve</text>
     
     <rect x="1110" y="640" width="140" height="54" rx="10" fill="#E0228F"/>
-    <text x="1136" y="674" fill="#1B0B16" font-family="sans-serif" font-size="17" font-weight="700">copiar versión</text>
+    <text x="1136" y="674" fill="#1B0B16" font-family="sans-serif" font-size="17" font-weight="700">copy version</text>
     
     <rect x="350" y="710" width="900" height="1" fill="#4E4750" fill-opacity="0.5"/>
     <rect x="350" y="725" width="230" height="40" rx="8" fill="#252227" stroke="#4E4750"/>
-    <text x="375" y="751" fill="#DED8DE" font-family="sans-serif" font-size="15">revisar bibliografía</text>
+    <text x="375" y="751" fill="#DED8DE" font-family="sans-serif" font-size="15">check bibliography</text>
     
     <text x="1080" y="751" fill="#9D929D" font-family="sans-serif" font-size="14">powered by: aismell.me</text>
   </g>
   <rect x="100" y="890" width="265" height="1" fill="#E0228F"/>
-  <text x="100" y="940" fill="#C5BFC5" font-family="sans-serif" font-size="22">tres herramientas en un panel · unifica flujos para texto corto y docs</text>
+  <text x="100" y="940" fill="#C5BFC5" font-family="sans-serif" font-size="22">three tools in one panel · one workflow for short text and documents</text>
 </svg>
