@@ -2,11 +2,14 @@
   "schemaVersion": 1,
   "id": "io.github.brm-src.ai-quick-clean",
   "name": "ai quick clean",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "author": "Cris",
   "homepage": "https://aismell.me",
   "description": "Clean or improve short text, or check a bibliography, in English or Spanish.",
-  "kinds": ["panel", "bar-widget"],
+  "kinds": [
+    "panel",
+    "bar-widget"
+  ],
   "keepLoaded": true,
   "entryPoints": {
     "panel": "QuickClean.qml",

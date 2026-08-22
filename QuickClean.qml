@@ -312,7 +312,7 @@ Item {
 
     Rectangle {
       anchors.fill: parent
-      color: "transparent"
+      color: Color.menu.scrim
       MouseArea {
         anchors.fill: parent
         enabled: root.backdropReady
@@ -357,12 +357,24 @@ Item {
               width: parent.width - closeButton.width - Style.spacing.md
               spacing: Style.spacing.xs
               Text {
-            textFormat: Text.PlainText
+                textFormat: Text.PlainText
                 text: root.titles[root.mode]
                 color: Color.menu.text
                 font.family: Style.font.menuFamily
                 font.pixelSize: Style.font.title
                 font.bold: true
+              }
+              Text {
+                textFormat: Text.PlainText
+                width: parent.width
+                text: root.mode === "bibliography"
+                  ? root.words("Duplicados, entradas incompletas y coincidencias externas.", "Duplicates, incomplete entries, and external matches.")
+                  : root.words("Pega, procesa y copia.", "Paste, process, copy.")
+                color: Color.menu.text
+                opacity: 0.62
+                font.family: Style.font.menuFamily
+                font.pixelSize: Style.font.bodySmall
+                wrapMode: Text.Wrap
               }
             }
 
@@ -476,7 +488,7 @@ Item {
                     }
                   }
                   Text {
-            textFormat: Text.PlainText
+                    textFormat: Text.PlainText
                     visible: bibSourceEditor.text === "" && !bibSourceEditor.activeFocus
                     anchors.fill: parent
                     text: root.words("Una entrada por línea o separada por espacios en blanco.", "One entry per line or separated by blank lines.")
@@ -504,7 +516,7 @@ Item {
                       width: parent.width
                       spacing: Style.spacing.md
                       Text {
-            textFormat: Text.PlainText
+                        textFormat: Text.PlainText
                         text: root.hasResult ? String(root.report.score || 0) + "/100" : ""
                         color: Color.accent
                         font.family: Style.font.menuFamily
@@ -514,7 +526,7 @@ Item {
                       Column {
                         width: parent.width - 100
                         Text {
-            textFormat: Text.PlainText
+                          textFormat: Text.PlainText
                           text: root.statusLabel()
                           color: Color.menu.text
                           font.family: Style.font.menuFamily
@@ -522,7 +534,7 @@ Item {
                           font.bold: true
                         }
                         Text {
-            textFormat: Text.PlainText
+                          textFormat: Text.PlainText
                           text: root.words(
                             String(root.report.entryCount || 0) + " entradas · " + String((root.report.findings || []).length) + " hallazgos",
                             String(root.report.entryCount || 0) + " entries · " + String((root.report.findings || []).length) + " findings")
@@ -534,8 +546,10 @@ Item {
                       }
                     }
 
+                    PanelSeparator { foreground: Color.menu.text }
+
                     Text {
-            textFormat: Text.PlainText
+                      textFormat: Text.PlainText
                       width: parent.width
                       visible: Boolean(root.report && root.report.analysis && root.report.analysis.truncated)
                       text: root.words("El análisis lingüístico cubre los primeros 3.000 caracteres; las comprobaciones estructurales cubren todo el texto.", "Linguistic analysis covers the first 3,000 characters; structural checks cover the full text.")
@@ -547,7 +561,7 @@ Item {
                     }
 
                     Text {
-            textFormat: Text.PlainText
+                      textFormat: Text.PlainText
                       width: parent.width
                       visible: root.report.lookup !== undefined
                       text: root.lookupSummary()
@@ -564,7 +578,7 @@ Item {
                         width: resultsColumn.width
                         height: resultLabel.implicitHeight
                         Text {
-            textFormat: Text.PlainText
+                          textFormat: Text.PlainText
                           id: resultLabel
                           width: parent.width
                           text: "• " + root.lookupLabel(modelData)
@@ -586,7 +600,7 @@ Item {
                     Repeater {
                       model: root.report.findings || []
                       delegate: Text {
-            textFormat: Text.PlainText
+                        textFormat: Text.PlainText
                         width: resultsColumn.width
                         text: "• " + root.findingLabel(modelData)
                         color: modelData.severity === "high" ? Color.accent : Color.menu.text
@@ -621,7 +635,7 @@ Item {
                 Row {
                   width: parent.width
                   Text {
-            textFormat: Text.PlainText
+                    textFormat: Text.PlainText
                     id: sourceLabel
                     text: root.words("tu texto", "your text")
                     color: Color.menu.text
@@ -635,7 +649,7 @@ Item {
                     height: 1
                   }
                   Text {
-            textFormat: Text.PlainText
+                    textFormat: Text.PlainText
                     id: charCount
                     text: String(root.sourceText.length) + "/3000"
                     color: root.sourceText.length > 2800 ? Color.urgent : (root.sourceText.length > 2500 ? Color.accent : Color.menu.text)
@@ -702,7 +716,7 @@ Item {
                       }
                     }
                     Text {
-            textFormat: Text.PlainText
+                      textFormat: Text.PlainText
                       visible: sourceEditor.text === "" && !sourceEditor.activeFocus
                       anchors.fill: parent
                       text: root.words("Pega un mensaje, correo o párrafo corto.", "Paste a short message, email, or paragraph.")
@@ -733,7 +747,7 @@ Item {
                 anchors.leftMargin: parent.contentLeftInset
                 spacing: Style.spacing.sm
                 Text {
-            textFormat: Text.PlainText
+                  textFormat: Text.PlainText
                   text: root.words("sin palabrería", "cleaned up")
                   color: root.hasResult ? Style.selectedStateColor(Color.menu.text, Color.accent) : Color.menu.text
                   opacity: root.hasResult ? 1 : 0.56
@@ -751,7 +765,7 @@ Item {
                     contentHeight: Math.max(height, cleanedTextItem.implicitHeight)
                     clip: true
                     Text {
-            textFormat: Text.PlainText
+                      textFormat: Text.PlainText
                       id: cleanedTextItem
                       width: parent.width
                       text: root.cleanedText
@@ -763,7 +777,7 @@ Item {
                     }
                   }
                   Text {
-            textFormat: Text.PlainText
+                    textFormat: Text.PlainText
                     anchors.fill: parent
                     visible: !root.hasResult
                     text: root.words("Aquí aparecerá tu texto sin el relleno.", "Your text without the padding will appear here.")
@@ -827,7 +841,7 @@ Item {
               height: parent.height
 
               Text {
-            textFormat: Text.PlainText
+                textFormat: Text.PlainText
                 id: poweredByLabel
                 anchors.right: parent.right
                 anchors.verticalCenter: parent.verticalCenter
